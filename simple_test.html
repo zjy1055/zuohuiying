@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简单API测试</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        button { padding: 10px; margin: 10px 0; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>简单API测试</h1>
+    
+    <button onclick="testLogin()">1. 登录获取Token</button>
+    <button onclick="testDocumentReserve()">2. 测试文书预约</button>
+    <button onclick="testDocumentList()">3. 测试获取列表</button>
+    <button onclick="checkLocalStorage()">4. 检查LocalStorage</button>
+    
+    <div>
+        <h3>输出日志:</h3>
+        <pre id="output"></pre>
+    </div>
+
+    <script>
+        // 全局变量存储token
+        let token = null;
+        
+        // 日志函数
+        function log(message) {
+            const output = document.getElementById('output');
+            output.textContent += message + '\n';
+            console.log(message);
+        }
+        
+        // 清除日志
+        function clearLog() {
+            document.getElementById('output').textContent = '';
+        }
+        
+        // 测试登录
+        async function testLogin() {
+            clearLog();
+            log('开始登录...');
+            
+            try {
+                const response = await axios.post('http://localhost:8000/auth/login', 
+                    new URLSearchParams({
+                        username: 'test_student',
+                        password: '123456',
+                        scope: 'student'
+                    }),
+                    {
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        }
+                    }
+                );
+                
+                log('登录成功！状态码:', response.status);
+                log('响应数据:', JSON.stringify(response.data, null, 2));
+                
+                // 保存token到localStorage和全局变量
+                token = response.data.access_token;
+                localStorage.setItem('token', token);
+                localStorage.setItem('userRole', 'student');
+                localStorage.setItem('userInfo', JSON.stringify({ username: 'test_student' }));
+                
+                log('Token已保存到localStorage');
+                
+            } catch (error) {
+                log('登录失败！');
+                log('错误信息:', error.message);
+                if (error.response) {
+                    log('响应状态:', error.response.status);
+                    log('响应数据:', JSON.stringify(error.response.data, null, 2));
+                }
+            }
+        }
+        
+        // 测试文书预约
+        async function testDocumentReserve() {
+            clearLog();
+            
+            // 从localStorage获取token
+            token = localStorage.getItem('token');
+            
+            if (!token) {
+                log('未找到token，请先登录！');
+                return;
+            }
+            
+            log('使用Token:', token);
+            
+            try {
+                // 直接使用axios测试，不使用拦截器
+                log('准备发送预约请求...');
+                
+                // 测试不同的URL变体
+                const urlsToTest = [
+                    'http://localhost:8000/student/document/reserve',
+                    'http://localhost:8000/student/document/reserve/'
+                ];
+                
+                for (const url of urlsToTest) {
+                    log(`\n测试URL: ${url}`);
+                    try {
+                        const response = await axios.post(url, 
+                            {
+                                document_type: 'personal_statement',
+                                document_count: 1,
+                                teacher_id: 2,
+                                target_school: '',
+                                notes: ''
+                            },
+                            {
+                                headers: {
+                                    'Authorization': `Bearer ${token}`,
+                                    'Content-Type': 'application/json'
+                                }
+                            }
+                        );
+                        
+                        log(`URL ${url} 请求成功！状态码:`, response.status);
+                        log('响应数据:', JSON.stringify(response.data, null, 2));
+                    } catch (error) {
+                        log(`URL ${url} 请求失败！`);
+                        log('错误信息:', error.message);
+                        if (error.response) {
+                            log('响应状态:', error.response.status);
+                            log('响应数据:', JSON.stringify(error.response.data, null, 2));
+                        }
+                    }
+                }
+                
+            } catch (error) {
+                log('预约测试过程出错:', error.message);
+            }
+        }
+        
+        // 测试获取文书列表
+        async function testDocumentList() {
+            clearLog();
+            
+            // 从localStorage获取token
+            token = localStorage.getItem('token');
+            
+            if (!token) {
+                log('未找到token，请先登录！');
+                return;
+            }
+            
+            try {
+                log('准备获取文书列表...');
+                const response = await axios.get('http://localhost:8000/student/document/list', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                log('获取列表成功！状态码:', response.status);
+                log('列表数据:', JSON.stringify(response.data, null, 2));
+                
+            } catch (error) {
+                log('获取列表失败！');
+                log('错误信息:', error.message);
+                if (error.response) {
+                    log('响应状态:', error.response.status);
+                    log('响应数据:', JSON.stringify(error.response.data, null, 2));
+                }
+            }
+        }
+        
+        // 检查localStorage内容
+        function checkLocalStorage() {
+            clearLog();
+            log('LocalStorage内容:');
+            log('token:', localStorage.getItem('token'));
+            log('userRole:', localStorage.getItem('userRole'));
+            log('userInfo:', localStorage.getItem('userInfo'));
+        }
+    </script>
+</body>
+</html>

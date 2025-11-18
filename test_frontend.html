@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API测试页面</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .output {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            white-space: pre-wrap;
+        }
+        button {
+            padding: 10px 15px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input {
+            padding: 8px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <h1>API测试页面</h1>
+    
+    <div class="form-group">
+        <label for="apiUrl">API URL:</label>
+        <input type="text" id="apiUrl" value="http://localhost:8000/student/document/reserve">
+    </div>
+    
+    <button id="testBtn">测试API调用</button>
+    
+    <div class="output" id="output"></div>
+
+    <script>
+        // 模拟localStorage
+        const mockLocalStorage = {
+            _data: {},
+            getItem(key) {
+                console.log(`localStorage.getItem('${key}'):`, this._data[key] || null);
+                return this._data[key] || null;
+            },
+            setItem(key, value) {
+                console.log(`localStorage.setItem('${key}', '${value}')`);
+                this._data[key] = value;
+            }
+        };
+
+        // 保存登录信息到localStorage（模拟用户已登录状态）
+        async function loginAndSaveToken() {
+            try {
+                log('正在登录...');
+                const response = await axios.post('http://localhost:8000/auth/login', 
+                    new URLSearchParams({
+                        username: 'test_student',
+                        password: '123456',
+                        scope: 'student'
+                    }),
+                    {
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        }
+                    }
+                );
+                
+                if (response.status === 200) {
+                    const { access_token } = response.data;
+                    mockLocalStorage.setItem('token', access_token);
+                    mockLocalStorage.setItem('userRole', 'student');
+                    mockLocalStorage.setItem('userInfo', JSON.stringify({ username: 'test_student' }));
+                    log('登录成功！Token已保存');
+                    log('Token:', access_token);
+                    return access_token;
+                }
+            } catch (error) {
+                logError('登录失败:', error);
+            }
+            return null;
+        }
+
+        // 创建apiClient（模拟前端common.js中的实现）
+        function createApiClient() {
+            const client = axios.create({
+                baseURL: 'http://localhost:8000',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            // 请求拦截器
+            client.interceptors.request.use(config => {
+                const token = mockLocalStorage.getItem('token');
+                if (token) {
+                    config.headers.Authorization = `Bearer ${token}`;
+                }
+                log('请求配置:', {
+                    url: config.url,
+                    method: config.method,
+                    headers: config.headers,
+                    data: config.data
+                });
+                return config;
+            });
+
+            // 响应拦截器
+            client.interceptors.response.use(
+                response => {
+                    log('响应成功:', { status: response.status, data: response.data });
+                    return response;
+                },
+                error => {
+                    logError('响应错误:', {
+                        status: error.response?.status,
+                        statusText: error.response?.statusText,
+                        data: error.response?.data,
+                        message: error.message
+                    });
+                    return Promise.reject(error);
+                }
+            );
+
+            return client;
+        }
+
+        // 测试API调用
+        async function testApi() {
+            const output = document.getElementById('output');
+            output.textContent = '';
+            
+            try {
+                // 1. 登录获取token
+                const token = await loginAndSaveToken();
+                if (!token) {
+                    log('无法继续测试');
+                    return;
+                }
+                
+                // 2. 创建apiClient
+                const apiClient = createApiClient();
+                
+                // 3. 测试预约接口
+                const apiUrl = document.getElementById('apiUrl').value;
+                log(`\n正在调用预约API: ${apiUrl}`);
+                
+                const response = await apiClient.post(apiUrl, {
+                    document_type: 'personal_statement',
+                    document_count: 1,
+                    teacher_id: 2,
+                    target_school: '',
+                    notes: ''
+                });
+                
+                log('\n预约成功！返回数据:', response.data);
+                
+                // 4. 测试获取列表
+                log('\n正在调用获取列表API...');
+                const listResponse = await apiClient.get('/student/document/list');
+                log('列表获取成功！返回数据:', listResponse.data);
+                
+            } catch (error) {
+                logError('测试过程出错:', error);
+            }
+        }
+
+        // 日志函数
+        function log(...args) {
+            const output = document.getElementById('output');
+            args.forEach(arg => {
+                output.textContent += typeof arg === 'string' ? arg + '\n' : JSON.stringify(arg, null, 2) + '\n';
+            });
+            console.log(...args);
+        }
+
+        function logError(...args) {
+            const output = document.getElementById('output');
+            output.style.color = 'red';
+            args.forEach(arg => {
+                output.textContent += 'ERROR: ' + (typeof arg === 'string' ? arg + '\n' : JSON.stringify(arg, null, 2) + '\n');
+            });
+            console.error(...args);
+        }
+
+        // 绑定按钮事件
+        document.getElementById('testBtn').addEventListener('click', testApi);
+    </script>
+</body>
+</html>

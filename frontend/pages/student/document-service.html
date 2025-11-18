@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文书服务 - 留学服务平台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="../../index.html">留学服务平台</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard.html">仪表盘</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="school-recommendation.html">选校推荐</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="school-search.html">学校搜索</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="success-cases.html">成功案例</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="training-service.html">培训服务</a>
+                    </li>
+                    <li class="nav-item active">
+                        <a class="nav-link" href="document-service.html">文书服务</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <span id="username-display">用户名</span>
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <a class="dropdown-item" href="profile.html">个人信息</a>
+                            <a class="dropdown-item" href="javascript:void(0);" id="logout-btn">退出登录</a>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主体内容 -->
+    <div class="container mt-5">
+        <h2>文书润色服务</h2>
+        
+        <!-- 预约服务表单 -->
+        <div class="card mt-4">
+            <div class="card-header bg-primary text-white">
+                <h4>预约文书润色</h4>
+            </div>
+            <div class="card-body">
+                <form id="document-reservation-form" class="needs-validation" novalidate>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="document-type" class="form-label">文书类型</label>
+                            <select class="form-select" id="document-type" required>
+                                <option value="">请选择文书类型</option>
+                                <option value="personal_statement">个人陈述(PS)</option>
+                                <option value="sop">目的陈述(SOP)</option>
+                                <option value="letter_of_recommendation">推荐信</option>
+                                <option value="cv">简历</option>
+                                <option value="essay">小作文</option>
+                                <option value="other">其他</option>
+                            </select>
+                            <div class="invalid-feedback">请选择文书类型</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="document-count" class="form-label">润色篇数</label>
+                            <select class="form-select" id="document-count" required>
+                                <option value="">请选择篇数</option>
+                                <option value="1">1篇</option>
+                                <option value="2">2篇</option>
+                                <option value="3">3篇</option>
+                                <option value="5">5篇</option>
+                                <option value="10">10篇</option>
+                            </select>
+                            <div class="invalid-feedback">请选择篇数</div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label for="document-teacher-select" class="form-label">选择教师</label>
+                            <select class="form-select" id="document-teacher-select" required>
+                                <option value="">请选择教师</option>
+                                <!-- 教师列表会通过API动态加载 -->
+                            </select>
+                            <div class="invalid-feedback">请选择教师</div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label for="target-school" class="form-label">目标学校/项目（选填）</label>
+                            <input type="text" class="form-control" id="target-school" placeholder="请输入目标学校或项目名称">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label for="document-notes" class="form-label">备注</label>
+                            <textarea class="form-control" id="document-notes" rows="3" placeholder="请描述您对文书的特殊需求或关注点"></textarea>
+                        </div>
+                    </div>
+                    <div class="row mt-4">
+                        <div class="col-md-12 text-center">
+                            <button type="submit" class="btn btn-primary btn-lg">提交预约</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- 文书预约列表 -->
+        <div class="card mt-5">
+            <div class="card-header bg-success text-white">
+                <h4>我的文书预约</h4>
+            </div>
+            <div class="card-body">
+                <div id="document-reservations-container">
+                    <div class="text-center py-5">
+                        <p class="text-muted">正在加载文书预约记录...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 查看详情模态框 -->
+    <div class="modal fade" id="documentDetailModal" tabindex="-1" role="dialog" aria-labelledby="documentDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="documentDetailModalLabel">文书预约详情</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="document-modal-body">
+                    <!-- 详情内容会动态填充 -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../../js/common.js"></script>
+    <script>
+        // 调试信息函数
+        function logDebug(message) {
+            console.log('[文档服务]', message);
+        }
+        
+        // 等待apiClient初始化的辅助函数
+        function waitForApiClient() {
+            return new Promise((resolve) => {
+                if (window.apiClient) {
+                    logDebug('apiClient 已初始化');
+                    resolve();
+                    return;
+                }
+                
+                let attempts = 0;
+                const maxAttempts = 10;
+                const interval = 100; // 100ms间隔
+                
+                logDebug('等待apiClient初始化...');
+                const checkInterval = setInterval(() => {
+                    attempts++;
+                    if (window.apiClient) {
+                        clearInterval(checkInterval);
+                        logDebug('apiClient 初始化成功');
+                        resolve();
+                    } else if (attempts >= maxAttempts) {
+                        clearInterval(checkInterval);
+                        logDebug('警告: apiClient初始化超时，尝试手动初始化');
+                        // 手动初始化apiClient
+                        if (typeof axios !== 'undefined') {
+                            window.apiClient = axios.create({
+                                baseURL: 'http://localhost:8000',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                }
+                            });
+                            
+                            // 添加请求拦截器
+                            window.apiClient.interceptors.request.use(config => {
+                                const token = localStorage.getItem('token');
+                                if (token) {
+                                    config.headers.Authorization = `Bearer ${token}`;
+                                }
+                                logDebug(`请求: ${config.method.toUpperCase()} ${config.url}`);
+                                return config;
+                            });
+                            
+                            // 添加响应拦截器
+                            window.apiClient.interceptors.response.use(
+                                response => {
+                                    logDebug(`响应成功: ${response.config.url} ${response.status}`);
+                                    return response;
+                                },
+                                error => {
+                                    logDebug(`响应错误: ${error.config?.url} ${error.response?.status || '无响应'}`);
+                                    return Promise.reject(error);
+                                }
+                            );
+                        }
+                        resolve();
+                    }
+                }, interval);
+            });
+        }
+        
+        // 初始化函数
+        async function initPage() {
+            logDebug('开始页面初始化...');
+            
+            // 检查登录状态
+            if (!checkLogin()) {
+                logDebug('未登录，已跳转');
+                return;
+            }
+            
+            // 等待apiClient初始化
+            await waitForApiClient();
+            
+            // 退出登录
+            document.getElementById('logout-btn').addEventListener('click', () => {
+                logout();
+                window.location.href = '../../index.html';
+            });
+            
+            // 加载数据
+            logDebug('加载页面数据...');
+            loadDocumentTeachers();
+            loadDocumentReservations();
+        }
+        
+        // 加载教师列表
+        async function loadDocumentTeachers() {
+            try {
+                // 这里应该调用获取教师列表的API
+                // 由于是模拟环境，我们使用模拟数据
+                const teachers = [
+                    { id: 1, name: '张老师', specialty: 'PS/SOP写作指导' },
+                    { id: 2, name: '李老师', specialty: '学术论文润色' },
+                    { id: 3, name: '王老师', specialty: '推荐信优化' },
+                    { id: 4, name: '刘老师', specialty: '英文简历优化' }
+                ];
+                
+                const teacherSelect = document.getElementById('document-teacher-select');
+                teachers.forEach(teacher => {
+                    const option = document.createElement('option');
+                    option.value = teacher.id;
+                    option.textContent = `${teacher.name} (${teacher.specialty})`;
+                    teacherSelect.appendChild(option);
+                });
+                logDebug('教师列表加载完成');
+            } catch (error) {
+                logDebug('加载教师列表失败:', error);
+            }
+        }
+        
+        // 表单提交处理
+        document.getElementById('document-reservation-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const form = e.target;
+            if (!form.checkValidity()) {
+                form.classList.add('was-validated');
+                return;
+            }
+            
+            // 确保apiClient已初始化
+            await waitForApiClient();
+            
+            const documentType = document.getElementById('document-type').value;
+            const documentCount = document.getElementById('document-count').value;
+            const teacherId = document.getElementById('document-teacher-select').value;
+            const targetSchool = document.getElementById('target-school').value;
+            const notes = document.getElementById('document-notes').value;
+            
+            // 构造请求数据
+            const reservationData = {
+                document_type: documentType,
+                document_count: parseInt(documentCount),
+                teacher_id: parseInt(teacherId),
+                target_school: targetSchool || '',
+                notes: notes || ''
+            };
+            
+            logDebug('准备提交预约数据:', reservationData);
+            
+            try {
+                // 确保使用window.apiClient
+                if (!window.apiClient) {
+                    throw new Error('apiClient未初始化');
+                }
+                
+                // 提交预约 - 尝试多种URL格式
+                const urls = [
+                    '/student/document/reserve',
+                    '/student/document/reserve/',
+                    'student/document/reserve',
+                    'student/document/reserve/'
+                ];
+                
+                let response;
+                let lastError;
+                
+                for (const url of urls) {
+                    try {
+                        logDebug(`尝试请求: ${url}`);
+                        response = await window.apiClient.post(url, reservationData);
+                        logDebug('提交成功，响应:', response.data);
+                        break; // 如果成功，退出循环
+                    } catch (err) {
+                        lastError = err;
+                        logDebug(`请求 ${url} 失败:`, err.message);
+                    }
+                }
+                
+                // 如果所有URL都失败，抛出最后一个错误
+                if (!response) {
+                    throw lastError || new Error('所有URL尝试均失败');
+                }
+                
+                alert('预约提交成功！');
+                form.reset();
+                form.classList.remove('was-validated');
+                
+                // 重新加载预约列表
+                loadDocumentReservations();
+            } catch (error) {
+                logDebug('提交预约失败:', error);
+                alert('预约提交失败，请稍后重试');
+            }
+        });
+        
+        // 加载文书预约列表
+        async function loadDocumentReservations() {
+            try {
+                // 确保apiClient已初始化
+                await waitForApiClient();
+                
+                if (!window.apiClient) {
+                    throw new Error('apiClient未初始化');
+                }
+                
+                logDebug('加载文书预约列表...');
+                const response = await window.apiClient.get('/student/document/list');
+                const reservations = response.data;
+                
+                const container = document.getElementById('document-reservations-container');
+                
+                if (reservations.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-5">
+                            <p class="text-muted">暂无文书预约记录</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // 生成预约列表HTML
+                let html = `
+                    <table class="table table-bordered table-hover">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>预约编号</th>
+                                <th>文书类型</th>
+                                <th>润色篇数</th>
+                                <th>教师</th>
+                                <th>预约时间</th>
+                                <th>状态</th>
+                                <th>进度</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                reservations.forEach(reservation => {
+                    // 状态样式
+                    let statusClass = 'badge-secondary';
+                    let statusText = '未知';
+                    
+                    switch(reservation.status) {
+                        case 'pending':
+                            statusClass = 'badge-warning';
+                            statusText = '待受理';
+                            break;
+                        case 'accepted':
+                            statusClass = 'badge-info';
+                            statusText = '已受理';
+                            break;
+                        case 'processing':
+                            statusClass = 'badge-primary';
+                            statusText = '处理中';
+                            break;
+                        case 'completed':
+                            statusClass = 'badge-success';
+                            statusText = '已完成';
+                            break;
+                        case 'rejected':
+                            statusClass = 'badge-danger';
+                            statusText = '已拒绝';
+                            break;
+                    }
+                    
+                    // 进度条
+                    const progress = reservation.progress || 0;
+                    const progressBar = `
+                        <div class="progress">
+                            <div class="progress-bar ${getProgressBarClass(progress)}" role="progressbar" style="width: ${progress}%" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100">
+                                ${progress}%
+                            </div>
+                        </div>
+                    `;
+                    
+                    html += `
+                        <tr>
+                            <td>${reservation.id}</td>
+                            <td>${getDocumentTypeText(reservation.document_type || '') || '普通文书'}</td>
+                            <td>${reservation.document_count}篇</td>
+                            <td>${reservation.teacher_name || '未分配'}</td>
+                            <td>${formatDate(reservation.created_at)}</td>
+                            <td><span class="badge ${statusClass}">${statusText}</span></td>
+                            <td>${reservation.status !== 'rejected' ? progressBar : '-'}</td>
+                            <td>
+                                <button class="btn btn-primary btn-sm" onclick="viewDocumentReservationDetail(${reservation.id})">
+                                    查看详情
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                        </tbody>
+                    </table>
+                `;
+                
+                container.innerHTML = html;
+            } catch (error) {
+                logDebug('获取文书预约列表失败:', error);
+                document.getElementById('document-reservations-container').innerHTML = `
+                    <div class="text-center py-5">
+                        <p class="text-danger">加载文书预约记录失败，请稍后重试</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // 查看文书预约详情
+        async function viewDocumentReservationDetail(reservationId) {
+            try {
+                // 确保apiClient已初始化
+                await waitForApiClient();
+                
+                if (!window.apiClient) {
+                    throw new Error('apiClient未初始化');
+                }
+                
+                logDebug('加载预约详情，ID:', reservationId);
+                const response = await window.apiClient.get(`/student/document/detail?id=${reservationId}`);
+                const reservation = response.data;
+                logDebug('预约详情加载成功:', reservation);
+                
+                // 生成详情HTML
+                const modalBody = document.getElementById('document-modal-body');
+                
+                // 进度条
+                const progress = reservation.progress || 0;
+                const progressBar = `
+                    <div class="progress">
+                        <div class="progress-bar ${getProgressBarClass(progress)}" role="progressbar" style="width: ${progress}%" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100">
+                            ${progress}%
+                        </div>
+                    </div>
+                `;
+                
+                modalBody.innerHTML = `
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p><strong>预约编号：</strong>${reservation.id}</p>
+                            <p><strong>文书类型：</strong>${getDocumentTypeText(reservation.document_type)}</p>
+                            <p><strong>润色篇数：</strong>${reservation.document_count}篇</p>
+                            <p><strong>目标学校：</strong>${reservation.target_school || '未指定'}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>处理教师：</strong>${reservation.teacher_name || '未分配'}</p>
+                            <p><strong>预约时间：</strong>${formatDate(reservation.created_at)}</p>
+                            <p><strong>状态：</strong>${getStatusText(reservation.status)}</p>
+                            <p><strong>进度：</strong>${reservation.status !== 'rejected' ? progressBar : '-'}</p>
+                        </div>
+                    </div>
+                    ${reservation.notes ? `<div class="mb-3"><strong>备注：</strong>${reservation.notes}</div>` : ''}
+                    ${reservation.revised_content ? `
+                        <div class="mb-3">
+                            <strong>润色后内容：</strong>
+                            <div class="mt-2 p-3 bg-light border rounded" style="white-space: pre-wrap;">
+                                ${reservation.revised_content}
+                            </div>
+                        </div>
+                    ` : '<div class="text-muted mb-3">教师尚未提交润色内容</div>'}
+                    ${reservation.comments ? `<div class="mb-3"><strong>教师点评：</strong>${reservation.comments}</div>` : ''}
+                `;
+                
+                // 显示模态框（使用原生JavaScript替代jQuery）
+                const modal = new bootstrap.Modal(document.getElementById('documentDetailModal'));
+                modal.show();
+            } catch (error) {
+                logDebug('获取文书预约详情失败:', error);
+                alert('加载详情失败，请稍后重试');
+            }
+        }
+        
+        // 辅助函数：获取文书类型文本
+        function getDocumentTypeText(type) {
+            const types = {
+                'personal_statement': '个人陈述(PS)',
+                'sop': '目的陈述(SOP)',
+                'letter_of_recommendation': '推荐信',
+                'cv': '简历',
+                'essay': '小作文',
+                'other': '其他'
+            };
+            return types[type] || type;
+        }
+        
+        // 辅助函数：获取状态文本
+        function getStatusText(status) {
+            const statuses = {
+                'pending': '待受理',
+                'accepted': '已受理',
+                'processing': '处理中',
+                'completed': '已完成',
+                'rejected': '已拒绝'
+            };
+            return statuses[status] || '未知';
+        }
+        
+        // 辅助函数：获取进度条样式类
+        function getProgressBarClass(progress) {
+            if (progress < 30) return 'bg-danger';
+            if (progress < 70) return 'bg-warning';
+            return 'bg-success';
+        }
+        
+        // 辅助函数：格式化日期
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleString('zh-CN');
+        }
+        
+        // 页面加载时初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            // 检查登录状态
+            if (!checkLogin()) return;
+            
+            // 检查角色权限
+            const role = getUserRole();
+            if (role !== 'student') {
+                alert('您没有权限访问此页面');
+                window.location.href = '../../index.html';
+                return;
+            }
+            
+            // 设置用户名显示
+            const username = getUsername();
+            if (username) {
+                document.getElementById('username-display').textContent = username;
+            }
+            
+            // 加载数据
+            loadDocumentTeachers();
+            loadDocumentReservations();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>培训管理 - 留学服务平台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="../../index.html">留学服务平台</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard.html">仪表盘</a>
+                    </li>
+                    <li class="nav-item active">
+                        <a class="nav-link" href="training-management.html">培训管理</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="document-management.html">文书管理</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="student-statistics.html">学生统计</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="school-management.html">学校管理</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <span id="username-display">用户名</span>
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <a class="dropdown-item" href="profile.html">个人信息</a>
+                            <a class="dropdown-item" href="javascript:void(0);" id="logout-btn">退出登录</a>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主体内容 -->
+    <div class="container mt-5">
+        <h2>培训服务管理</h2>
+        
+        <!-- 筛选条件 -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h4>筛选条件</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="status-filter" class="form-label">培训状态</label>
+                        <select class="form-select" id="status-filter">
+                            <option value="">全部</option>
+                            <option value="pending">待受理</option>
+                            <option value="accepted">已受理</option>
+                            <option value="processing">进行中</option>
+                            <option value="completed">已完成</option>
+                            <option value="rejected">已拒绝</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="student-name-filter" class="form-label">学生姓名</label>
+                        <input type="text" class="form-control" id="student-name-filter" placeholder="输入学生姓名">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="training-type-filter" class="form-label">培训类型</label>
+                        <select class="form-select" id="training-type-filter">
+                            <option value="">全部</option>
+                            <option value="toefl">托福培训</option>
+                            <option value="gre">GRE培训</option>
+                            <option value="ielts">雅思培训</option>
+                            <option value="sat">SAT培训</option>
+                            <option value="gmat">GMAT培训</option>
+                            <option value="other">其他培训</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12 text-right">
+                        <button class="btn btn-primary" id="filter-btn">筛选</button>
+                        <button class="btn btn-secondary ml-2" id="reset-filter-btn">重置</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 培训列表 -->
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h4>培训预约列表</h4>
+            </div>
+            <div class="card-body">
+                <div id="training-list-container">
+                    <div class="text-center py-5">
+                        <p class="text-muted">正在加载培训预约记录...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 培训详情与处理模态框 -->
+    <div class="modal fade" id="trainingDetailModal" tabindex="-1" role="dialog" aria-labelledby="trainingDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="trainingDetailModalLabel">培训预约详情</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="training-modal-body">
+                    <!-- 详情内容会动态填充 -->
+                </div>
+                <div class="modal-footer">
+                    <div id="action-buttons"></div>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 更新进度模态框 -->
+    <div class="modal fade" id="updateProgressModal" tabindex="-1" role="dialog" aria-labelledby="updateProgressModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="updateProgressModalLabel">更新培训进度</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="progress-form">
+                        <div class="mb-3">
+                            <label for="completed-hours" class="form-label">已上课时（小时）</label>
+                            <input type="number" class="form-control" id="completed-hours" min="0" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="training-feedback" class="form-label">学生反馈/评语（选填）</label>
+                            <textarea class="form-control" id="training-feedback" rows="3" placeholder="请输入学生表现反馈或评语"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="submit-progress-btn">提交</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../../js/common.js"></script>
+    <script>
+        let currentTrainingId = null;
+        
+        // 检查登录状态
+        checkLogin();
+        
+        // 退出登录
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            logout();
+            window.location.href = '../../index.html';
+        });
+        
+        // 加载培训预约列表
+        async function loadTrainingList() {
+            try {
+                // 获取筛选条件
+                const statusFilter = document.getElementById('status-filter').value;
+                const studentNameFilter = document.getElementById('student-name-filter').value;
+                const trainingTypeFilter = document.getElementById('training-type-filter').value;
+                
+                // 构建查询参数
+                const params = new URLSearchParams();
+                if (statusFilter) params.append('status', statusFilter);
+                if (studentNameFilter) params.append('student_name', studentNameFilter);
+                if (trainingTypeFilter) params.append('training_type', trainingTypeFilter);
+                
+                const response = await apiClient.get(`/teacher/training/list?${params.toString()}`);
+                const trainings = response.data;
+                
+                const container = document.getElementById('training-list-container');
+                
+                if (trainings.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-5">
+                            <p class="text-muted">暂无培训预约记录</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // 生成培训列表HTML
+                let html = `
+                    <table class="table table-bordered table-hover">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>培训编号</th>
+                                <th>学生</th>
+                                <th>培训类型</th>
+                                <th>总课时</th>
+                                <th>已上课时</th>
+                                <th>预约时间</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                trainings.forEach(training => {
+                    // 状态样式
+                    let statusClass = 'badge-secondary';
+                    let statusText = '未知';
+                    
+                    switch(training.status) {
+                        case 'pending':
+                            statusClass = 'badge-warning';
+                            statusText = '待受理';
+                            break;
+                        case 'accepted':
+                            statusClass = 'badge-info';
+                            statusText = '已受理';
+                            break;
+                        case 'processing':
+                            statusClass = 'badge-primary';
+                            statusText = '进行中';
+                            break;
+                        case 'completed':
+                            statusClass = 'badge-success';
+                            statusText = '已完成';
+                            break;
+                        case 'rejected':
+                            statusClass = 'badge-danger';
+                            statusText = '已拒绝';
+                            break;
+                    }
+                    
+                    html += `
+                        <tr>
+                            <td>${training.id}</td>
+                            <td>${training.student_name}</td>
+                            <td>${getTrainingTypeText(training.training_type)}</td>
+                            <td>${training.total_hours}小时</td>
+                            <td>${training.completed_hours || 0}小时</td>
+                            <td>${formatDate(training.created_at)}</td>
+                            <td><span class="badge ${statusClass}">${statusText}</span></td>
+                            <td>
+                                <button class="btn btn-primary btn-sm" onclick="viewTrainingDetail(${training.id})")>
+                                    查看详情
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                        </tbody>
+                    </table>
+                `;
+                
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('获取培训预约列表失败:', error);
+                document.getElementById('training-list-container').innerHTML = `
+                    <div class="text-center py-5">
+                        <p class="text-danger">加载培训预约记录失败，请稍后重试</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // 查看培训预约详情
+        async function viewTrainingDetail(trainingId) {
+            try {
+                const response = await apiClient.get(`/teacher/training/detail?id=${trainingId}`);
+                const training = response.data;
+                currentTrainingId = trainingId;
+                
+                // 生成详情HTML
+                const modalBody = document.getElementById('training-modal-body');
+                
+                // 进度条
+                const progressPercentage = training.total_hours > 0 ? 
+                    Math.round((training.completed_hours || 0) / training.total_hours * 100) : 0;
+                
+                const progressBar = `
+                    <div class="progress">
+                        <div class="progress-bar ${getProgressBarClass(progressPercentage)}" role="progressbar" style="width: ${progressPercentage}%" aria-valuenow="${progressPercentage}" aria-valuemin="0" aria-valuemax="100">
+                            ${progressPercentage}% (${training.completed_hours || 0}/${training.total_hours}小时)
+                        </div>
+                    </div>
+                `;
+                
+                modalBody.innerHTML = `
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p><strong>培训编号：</strong>${training.id}</p>
+                            <p><strong>学生：</strong>${training.student_name}</p>
+                            <p><strong>学生成绩：</strong></p>
+                            <ul>
+                                ${training.student_scores?.toefl ? `<li>托福: ${training.student_scores.toefl}</li>` : ''}
+                                ${training.student_scores?.gre ? `<li>GRE: ${training.student_scores.gre}</li>` : ''}
+                                ${training.student_scores?.gpa ? `<li>GPA: ${training.student_scores.gpa}</li>` : ''}
+                            </ul>
+                            <p><strong>培训类型：</strong>${getTrainingTypeText(training.training_type)}</p>
+                            <p><strong>总课时：</strong>${training.total_hours}小时</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>已上课时：</strong>${training.completed_hours || 0}小时</p>
+                            <p><strong>预约时间：</strong>${formatDate(training.created_at)}</p>
+                            <p><strong>状态：</strong>${getStatusText(training.status)}</p>
+                            <p><strong>进度：</strong>${training.status !== 'rejected' ? progressBar : '-'}</p>
+                        </div>
+                    </div>
+                    ${training.notes ? `<div class="mb-3"><strong>备注：</strong>${training.notes}</div>` : ''}
+                    ${training.feedback ? `
+                        <div class="mb-3">
+                            <strong>学生反馈：</strong>
+                            <div class="mt-2 p-3 bg-light border rounded">
+                                ${training.feedback}
+                            </div>
+                        </div>
+                    ` : ''}
+                    ${training.reject_reason ? `
+                        <div class="mb-3">
+                            <strong>拒绝原因：</strong>
+                            <div class="mt-2 p-3 bg-light border rounded">
+                                ${training.reject_reason}
+                            </div>
+                        </div>
+                    ` : ''}
+                `;
+                
+                // 生成操作按钮
+                const actionButtons = document.getElementById('action-buttons');
+                actionButtons.innerHTML = '';
+                
+                // 根据状态显示不同按钮
+                if (training.status === 'pending') {
+                    // 待受理状态：显示接受和拒绝按钮
+                    actionButtons.innerHTML = `
+                        <button type="button" class="btn btn-success mr-2" onclick="acceptTraining(${trainingId})")>
+                            接受预约
+                        </button>
+                        <button type="button" class="btn btn-danger mr-2" onclick="rejectTraining(${trainingId})")>
+                            拒绝预约
+                        </button>
+                    `;
+                } else if (training.status === 'accepted' || training.status === 'processing') {
+                    // 已受理或进行中：显示更新进度按钮
+                    actionButtons.innerHTML = `
+                        <button type="button" class="btn btn-primary mr-2" data-dismiss="modal" onclick="prepareProgressUpdate(${trainingId}, ${training.completed_hours || 0})")>
+                            更新进度
+                        </button>
+                        ${training.status === 'accepted' ? `
+                            <button type="button" class="btn btn-warning mr-2" onclick="startTraining(${trainingId})")>
+                                开始培训
+                            </button>
+                        ` : ''}
+                    `;
+                }
+                
+                // 显示模态框（使用原生JavaScript替代jQuery）
+                const modal = new bootstrap.Modal(document.getElementById('trainingDetailModal'));
+                modal.show();
+            } catch (error) {
+                console.error('获取培训预约详情失败:', error);
+                alert('加载详情失败，请稍后重试');
+            }
+        }
+        
+        // 接受培训预约
+        async function acceptTraining(trainingId) {
+            if (!confirm('确定接受该培训预约吗？')) return;
+            
+            try {
+                await apiClient.put('/teacher/training/status', {
+                    id: trainingId,
+                    status: 'accepted'
+                });
+                alert('培训预约已接受');
+                $('#trainingDetailModal').modal('hide');
+                loadTrainingList();
+            } catch (error) {
+                console.error('接受培训预约失败:', error);
+                alert('操作失败，请稍后重试');
+            }
+        }
+        
+        // 拒绝培训预约
+        async function rejectTraining(trainingId) {
+            const reason = prompt('请输入拒绝原因：');
+            if (!reason) return;
+            
+            try {
+                await apiClient.put('/teacher/training/status', {
+                    id: trainingId,
+                    status: 'rejected',
+                    reject_reason: reason
+                });
+                alert('培训预约已拒绝');
+                $('#trainingDetailModal').modal('hide');
+                loadTrainingList();
+            } catch (error) {
+                console.error('拒绝培训预约失败:', error);
+                alert('操作失败，请稍后重试');
+            }
+        }
+        
+        // 开始培训
+        async function startTraining(trainingId) {
+            if (!confirm('确定开始该培训吗？')) return;
+            
+            try {
+                await apiClient.put('/teacher/training/progress', {
+                    id: trainingId,
+                    status: 'processing'
+                });
+                alert('培训已开始');
+                $('#trainingDetailModal').modal('hide');
+                loadTrainingList();
+            } catch (error) {
+                console.error('开始培训失败:', error);
+                alert('操作失败，请稍后重试');
+            }
+        }
+        
+        // 准备更新进度
+        function prepareProgressUpdate(trainingId, currentHours) {
+            currentTrainingId = trainingId;
+            document.getElementById('completed-hours').value = currentHours;
+            document.getElementById('training-feedback').value = '';
+            // 显示更新进度模态框（使用原生JavaScript替代jQuery）
+    const modal = new bootstrap.Modal(document.getElementById('updateProgressModal'));
+    modal.show();
+        }
+        
+        // 提交进度更新
+        document.getElementById('submit-progress-btn').addEventListener('click', async () => {
+            const completedHours = document.getElementById('completed-hours').value;
+            const feedback = document.getElementById('training-feedback').value;
+            
+            if (!completedHours || isNaN(completedHours) || completedHours < 0) {
+                alert('请输入有效的已上课时');
+                return;
+            }
+            
+            try {
+                await apiClient.put('/teacher/training/progress', {
+                    id: currentTrainingId,
+                    completed_hours: parseInt(completedHours),
+                    feedback: feedback
+                });
+                
+                alert('进度更新成功');
+                $('#updateProgressModal').modal('hide');
+                loadTrainingList();
+            } catch (error) {
+                console.error('更新培训进度失败:', error);
+                alert('更新失败，请稍后重试');
+            }
+        });
+        
+        // 筛选按钮点击事件
+        document.getElementById('filter-btn').addEventListener('click', loadTrainingList);
+        
+        // 重置筛选按钮点击事件
+        document.getElementById('reset-filter-btn').addEventListener('click', () => {
+            document.getElementById('status-filter').value = '';
+            document.getElementById('student-name-filter').value = '';
+            document.getElementById('training-type-filter').value = '';
+            loadTrainingList();
+        });
+        
+        // 辅助函数：获取培训类型文本
+        function getTrainingTypeText(type) {
+            const types = {
+                'toefl': '托福培训',
+                'gre': 'GRE培训',
+                'ielts': '雅思培训',
+                'sat': 'SAT培训',
+                'gmat': 'GMAT培训',
+                'other': '其他培训'
+            };
+            return types[type] || type;
+        }
+        
+        // 辅助函数：获取状态文本
+        function getStatusText(status) {
+            const statuses = {
+                'pending': '待受理',
+                'accepted': '已受理',
+                'processing': '进行中',
+                'completed': '已完成',
+                'rejected': '已拒绝'
+            };
+            return statuses[status] || '未知';
+        }
+        
+        // 辅助函数：获取进度条样式类
+        function getProgressBarClass(progress) {
+            if (progress < 30) return 'bg-danger';
+            if (progress < 70) return 'bg-warning';
+            return 'bg-success';
+        }
+        
+        // 辅助函数：格式化日期
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleString('zh-CN');
+        }
+        
+        // 页面加载时初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            // 检查登录状态
+            if (!checkLogin()) return;
+            
+            // 检查角色权限
+            const role = getUserRole();
+            if (role !== 'teacher') {
+                alert('您没有权限访问此页面');
+                window.location.href = '../../index.html';
+                return;
+            }
+            
+            // 设置用户名显示
+            const username = getUsername();
+            if (username) {
+                document.getElementById('username-display').textContent = username;
+            }
+            
+            // 加载数据
+            loadTrainingList();
+        });
+    </script>
+</body>
+</html>

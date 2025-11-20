@@ -11,42 +11,46 @@ router = APIRouter(prefix="/student", tags=["留学生服务"])
 
 # 数据模型
 class StudentProfileUpdate(BaseModel):
-    name: Optional[str] = None
-    gender: Optional[str] = None
-    age: Optional[int] = None
-    toefl: Optional[float] = None
-    gre: Optional[float] = None
-    gpa: Optional[float] = None
-    target_region: Optional[str] = None
-    email: Optional[str] = None
-    phone: Optional[str] = None
+    """学生个人信息更新请求模型"""
+    name: Optional[str] = Field(None, description="真实姓名", example="张三")
+    gender: Optional[str] = Field(None, description="性别", example="男")
+    age: Optional[int] = Field(None, description="年龄，18-100岁", example=22, ge=18, le=100)
+    toefl: Optional[float] = Field(None, description="托福成绩，0-120分", example=105.0, ge=0, le=120)
+    gre: Optional[float] = Field(None, description="GRE成绩，260-340分", example=320.0, ge=260, le=340)
+    gpa: Optional[float] = Field(None, description="GPA成绩，0.0-4.0分", example=3.5, ge=0, le=4.0)
+    target_region: Optional[str] = Field(None, description="目标留学地区", example="美国")
+    email: Optional[str] = Field(None, description="电子邮箱", example="zhangsan@example.com")
+    phone: Optional[str] = Field(None, description="手机号码", example="13800138000")
 
 class SchoolResponse(BaseModel):
-    id: int
-    chinese_name: str
-    english_name: str
-    location: str
-    rank: int
-    basic_info: str
-    detailed_info: str
-    majors: List[dict] = []
-    recommendation_score: Optional[float] = None
+    """学校信息响应模型"""
+    id: int = Field(..., description="学校ID")
+    chinese_name: str = Field(..., description="学校中文名称", example="哈佛大学")
+    english_name: str = Field(..., description="学校英文名称", example="Harvard University")
+    location: str = Field(..., description="学校所在地", example="美国马萨诸塞州")
+    ranking: int = Field(..., description="学校排名", example=1)
+    introduction: str = Field(..., description="学校简介")
+    details: str = Field(..., description="学校详细信息")
+    majors: List[dict] = Field(default_factory=list, description="学校专业信息列表")
+    recommendation_score: Optional[float] = Field(None, description="推荐分数，基于学生成绩计算", example=85.5)
 
 class TrainingReserveRequest(BaseModel):
-    teacher_id: int
-    total_hours: int = Field(..., gt=0)
-    training_type: Optional[str] = None
-    notes: Optional[str] = None
+    """语言培训预约请求模型"""
+    teacher_id: Optional[int] = Field(None, description="教师ID，不指定则由系统分配")
+    total_hours: int = Field(..., gt=0, description="总课时数", example=20)
+    training_type: Optional[str] = Field(None, description="培训类型", example="托福培训")
+    notes: Optional[str] = Field(None, description="备注信息", example="希望重点辅导听力部分")
 
 class DocumentReserveRequest(BaseModel):
-    teacher_id: int
-    document_count: int = Field(..., gt=0)
-    document_type: Optional[str] = None
-    target_school: Optional[str] = None
-    notes: Optional[str] = None
+    """文书润色预约请求模型"""
+    teacher_id: int = Field(..., description="教师ID", example=2)
+    document_count: int = Field(..., gt=0, description="文档数量", example=3)
+    document_type: Optional[str] = Field(None, description="文档类型", example="个人陈述")
+    target_school: Optional[str] = Field(None, description="目标学校", example="哈佛大学")
+    notes: Optional[str] = Field(None, description="备注信息", example="希望突出科研经历")
 
 # 获取个人信息
-@router.get("/profile", response_model=dict)
+@router.get("/profile", response_model=dict, summary="获取个人信息", description="获取当前登录学生的个人详细信息")
 def get_profile(current_user: User = Depends(get_current_student), db: Session = Depends(get_db)):
     profile = db.query(StudentProfile).filter(StudentProfile.user_id == current_user.id).first()
     if not profile:
@@ -69,7 +73,7 @@ def get_profile(current_user: User = Depends(get_current_student), db: Session =
     }
 
 # 更新个人信息
-@router.put("/profile", response_model=dict)
+@router.put("/profile", response_model=dict, summary="更新个人信息", description="更新当前登录学生的个人信息，只更新非空字段")
 def update_profile(request: StudentProfileUpdate, current_user: User = Depends(get_current_student), db: Session = Depends(get_db)):
     profile = db.query(StudentProfile).filter(StudentProfile.user_id == current_user.id).first()
     if not profile:
@@ -78,18 +82,30 @@ def update_profile(request: StudentProfileUpdate, current_user: User = Depends(g
             detail="个人信息不存在"
         )
     
-    # 更新非空字段
-    update_data = request.dict(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(profile, field, value)
-    
-    db.commit()
-    db.refresh(profile)
-    
-    return {"message": "个人信息更新成功"}
+    try:
+        # 更新非空字段
+        update_data = request.dict(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(profile, field, value)
+        
+        db.commit()
+        db.refresh(profile)
+        
+        return {"message": "个人信息更新成功"}
+    except Exception as e:
+        db.rollback()
+        # 记录详细错误信息
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"学生信息更新失败: {str(e)}", exc_info=True)
+        # 返回通用错误消息，不泄露敏感信息
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="更新失败，请稍后重试"
+        )
 
 # 获取学校推荐
-@router.get("/recommendation", response_model=List[SchoolResponse])
+@router.get("/recommendation", response_model=List[SchoolResponse], summary="获取学校推荐", description="基于学生的托福、GRE、GPA成绩和目标地区，推荐合适的留学学校")
 def get_recommendations(current_user: User = Depends(get_current_student), db: Session = Depends(get_db)):
     # 获取学生信息
     profile = db.query(StudentProfile).filter(StudentProfile.user_id == current_user.id).first()
@@ -110,9 +126,9 @@ def get_recommendations(current_user: User = Depends(get_current_student), db: S
     for school in schools:
         # 计算推荐系数
         # 基于学校排名反推录取要求
-        toefl_requirement = 110 - (school.rank * 0.2) if school.rank else 90
-        gre_requirement = 330 - (school.rank * 0.1) if school.rank else 300
-        gpa_requirement = 3.8 - (school.rank * 0.002) if school.rank else 3.5
+        toefl_requirement = 110 - (school.ranking * 0.2) if school.ranking else 90
+        gre_requirement = 330 - (school.ranking * 0.1) if school.ranking else 300
+        gpa_requirement = 3.8 - (school.ranking * 0.002) if school.ranking else 3.5
         
         # 计算各项匹配度
         toefl_score = min(profile.toefl / toefl_requirement * 100, 100)
@@ -126,7 +142,7 @@ def get_recommendations(current_user: User = Depends(get_current_student), db: S
         if recommendation_score >= 60:
             # 获取专业信息
             majors = [
-                {"name": major.major_name, "rank": major.major_rank}
+                {"major_name": major.major_name, "major_rank": major.major_rank}
                 for major in school.majors
             ]
             
@@ -135,9 +151,9 @@ def get_recommendations(current_user: User = Depends(get_current_student), db: S
                 "chinese_name": school.chinese_name,
                 "english_name": school.english_name,
                 "location": school.location,
-                "rank": school.rank,
-                "basic_info": school.basic_info,
-                "detailed_info": school.detailed_info,
+                "ranking": school.ranking,
+                "introduction": school.introduction,
+                "details": school.details,
                 "majors": majors,
                 "recommendation_score": round(recommendation_score, 2)
             })
@@ -148,11 +164,11 @@ def get_recommendations(current_user: User = Depends(get_current_student), db: S
     return results
 
 # 查找学校
-@router.get("/search-schools", response_model=List[SchoolResponse])
+@router.get("/search-schools", response_model=List[SchoolResponse], summary="查找学校", description="根据学校名称、专业名称或地区搜索学校信息")
 def search_schools(
-    name: Optional[str] = Query(None, description="学校名称"),
-    major: Optional[str] = Query(None, description="专业名称"),
-    region: Optional[str] = Query(None, description="地区"),
+    name: Optional[str] = Query(None, description="学校名称搜索关键词", example="哈佛"),
+    major: Optional[str] = Query(None, description="专业名称搜索关键词", example="计算机"),
+    region: Optional[str] = Query(None, description="地区搜索关键词", example="美国"),
     current_user: User = Depends(get_current_student),
     db: Session = Depends(get_db)
 ):
@@ -183,6 +199,32 @@ def search_schools(
     
     for school in schools:
         majors = [
+            {"major_name": m.major_name, "major_rank": m.major_rank}
+            for m in school.majors
+        ]
+        
+        results.append({
+            "id": school.id,
+            "chinese_name": school.chinese_name,
+            "english_name": school.english_name,
+            "location": school.location,
+            "ranking": school.ranking,
+                "introduction": school.introduction,
+                "details": school.details,
+            "majors": majors
+        })
+    
+    return results
+
+# 获取学校列表
+@router.get("/schools", response_model=List[SchoolResponse], summary="获取学校列表", description="获取所有学校列表，用于学校推荐和查询")
+def get_schools(current_user: User = Depends(get_current_student), db: Session = Depends(get_db)):
+    # 查询所有学校
+    schools = db.query(School).all()
+    results = []
+    
+    for school in schools:
+        majors = [
             {"name": m.major_name, "rank": m.major_rank}
             for m in school.majors
         ]
@@ -192,17 +234,17 @@ def search_schools(
             "chinese_name": school.chinese_name,
             "english_name": school.english_name,
             "location": school.location,
-            "rank": school.rank,
-            "basic_info": school.basic_info,
-            "detailed_info": school.detailed_info,
+            "ranking": school.ranking,
+            "introduction": school.introduction,
+            "details": school.details,
             "majors": majors
         })
     
     return results
 
 # 获取学校详情
-@router.get("/school", response_model=SchoolResponse)
-def get_school(school_id: int, current_user: User = Depends(get_current_student), db: Session = Depends(get_db)):
+@router.get("/school/{school_id}", response_model=SchoolResponse, summary="获取学校详情", description="根据学校ID获取指定学校的详细信息，包括基本信息和专业设置")
+def get_school_detail(school_id: int, current_user: User = Depends(get_current_student), db: Session = Depends(get_db)):
     school = db.query(School).filter(School.id == school_id).first()
     if not school:
         raise HTTPException(
@@ -218,16 +260,16 @@ def get_school(school_id: int, current_user: User = Depends(get_current_student)
     return {
         "id": school.id,
         "chinese_name": school.chinese_name,
-        "english_name": school.english_name,
-        "location": school.location,
-        "rank": school.rank,
-        "basic_info": school.basic_info,
-        "detailed_info": school.detailed_info,
+            "english_name": school.english_name,
+            "location": school.location,
+            "ranking": school.ranking,
+            "introduction": school.introduction,
+            "details": school.details,
         "majors": majors
     }
 
 # 获取成功案例
-@router.get("/success-cases", response_model=List[dict])
+@router.get("/success-cases", response_model=List[dict], summary="获取成功案例", description="获取所有留学申请成功案例")
 def get_success_cases(current_user: User = Depends(get_current_student), db: Session = Depends(get_db)):
     cases = db.query(SuccessCase).all()
     return [
@@ -241,20 +283,12 @@ def get_success_cases(current_user: User = Depends(get_current_student), db: Ses
     ]
 
 # 预约语言培训
-@router.post("/training/reserve", response_model=dict)
+@router.post("/training/reserve", response_model=dict, summary="预约语言培训", description="为当前学生预约语言培训服务，可指定教师或由系统分配")
 def reserve_training(request: TrainingReserveRequest, current_user: User = Depends(get_current_student), db: Session = Depends(get_db)):
-    # 验证教师是否存在
-    teacher = db.query(User).filter(User.id == request.teacher_id, User.role == "teacher").first()
-    if not teacher:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="教师不存在"
-        )
-    
-    # 创建预约
+    # 创建预约，使用请求中的teacher_id值（如果提供）
     reservation = TrainingReservation(
         student_id=current_user.id,
-        teacher_id=request.teacher_id,
+        teacher_id=request.teacher_id,  # 使用请求中的教师ID
         total_hours=request.total_hours,
         training_type=request.training_type,
         notes=request.notes,
@@ -266,28 +300,36 @@ def reserve_training(request: TrainingReserveRequest, current_user: User = Depen
     
     return {"message": "预约成功", "reservation_id": reservation.id}
 
-# 查看培训预约列表
-@router.get("/training/list", response_model=List[dict])
+# 获取培训预约列表
+@router.get("/training/list", response_model=List[dict], summary="获取培训预约列表", description="获取当前学生的所有语言培训预约记录")
 def get_training_list(current_user: User = Depends(get_current_student), db: Session = Depends(get_db)):
     reservations = db.query(TrainingReservation).filter(
         TrainingReservation.student_id == current_user.id
     ).all()
     
-    return [
-        {
+    # 获取教师信息并添加到返回数据中
+    results = []
+    for r in reservations:
+        # 获取教师信息
+        teacher = db.query(User).filter(User.id == r.teacher_id).first()
+        teacher_name = teacher.username if teacher else '未分配'
+        
+        results.append({
             "id": r.id,
+            "training_type": r.training_type or '语言培训',
             "teacher_id": r.teacher_id,
+            "teacher_name": teacher_name,
             "total_hours": r.total_hours,
-            "attended_hours": r.attended_hours,
+            "completed_hours": r.attended_hours,  # 前端使用completed_hours字段
             "status": r.status,
             "feedback": r.feedback,
             "created_at": r.created_at.strftime("%Y-%m-%d %H:%M:%S")
-        }
-        for r in reservations
-    ]
+        })
+    
+    return results
 
 # 获取培训预约详情
-@router.get("/training/detail", response_model=dict)
+@router.get("/training/detail", response_model=dict, summary="获取培训预约详情", description="获取指定ID的语言培训预约详细信息")
 def get_training_detail(id: int, current_user: User = Depends(get_current_student), db: Session = Depends(get_db)):
     reservation = db.query(TrainingReservation).filter(
         TrainingReservation.id == id,
@@ -319,7 +361,7 @@ def get_training_detail(id: int, current_user: User = Depends(get_current_studen
     }
 
 # 预约文书润色
-@router.post("/document/reserve", response_model=dict)
+@router.post("/document/reserve", response_model=dict, summary="预约文书润色", description="为当前学生预约文书润色服务，需要指定教师")
 def reserve_document(request: DocumentReserveRequest, current_user: User = Depends(get_current_student), db: Session = Depends(get_db)):
     # 验证教师是否存在
     teacher = db.query(User).filter(User.id == request.teacher_id, User.role == "teacher").first()
@@ -347,7 +389,7 @@ def reserve_document(request: DocumentReserveRequest, current_user: User = Depen
     return {"message": "预约成功", "reservation_id": reservation.id}
 
 # 查看文书预约列表
-@router.get("/document/list", response_model=List[dict])
+@router.get("/document/list", response_model=List[dict], summary="获取文书预约列表", description="获取当前学生的所有文书润色预约记录")
 def get_document_list(current_user: User = Depends(get_current_student), db: Session = Depends(get_db)):
     reservations = db.query(DocumentReservation).filter(
         DocumentReservation.student_id == current_user.id
@@ -375,7 +417,7 @@ def get_document_list(current_user: User = Depends(get_current_student), db: Ses
     return results
 
 # 获取文书预约详情
-@router.get("/document/detail", response_model=dict)
+@router.get("/document/detail", response_model=dict, summary="获取文书预约详情", description="获取指定ID的文书润色预约详细信息")
 def get_document_detail(id: int, current_user: User = Depends(get_current_student), db: Session = Depends(get_db)):
     reservation = db.query(DocumentReservation).filter(
         DocumentReservation.id == id,

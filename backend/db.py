@@ -35,6 +35,41 @@ class SQLiteVisualizer:
         right_frame = ttk.LabelFrame(main_frame, text="表数据", padding=10)
         right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
         
+        # 创建一个标签来显示当前表名
+        self.table_label = ttk.Label(right_frame, text="选择一个表以查看数据", font=("SimHei", 12, "bold"))
+        self.table_label.pack(fill=tk.X, pady=5)
+        
+        # 创建操作按钮区域
+        self.button_frame = ttk.Frame(right_frame)
+        self.button_frame.pack(fill=tk.X, pady=5)
+        
+        # 添加增删改查按钮
+        self.add_button = ttk.Button(self.button_frame, text="添加记录", command=self.add_record_dialog)
+        self.add_button.pack(side=tk.LEFT, padx=2)
+        
+        self.edit_button = ttk.Button(self.button_frame, text="编辑记录", command=self.edit_record_dialog)
+        self.edit_button.pack(side=tk.LEFT, padx=2)
+        
+        self.delete_button = ttk.Button(self.button_frame, text="删除记录", command=self.delete_record)
+        self.delete_button.pack(side=tk.LEFT, padx=2)
+        
+        self.refresh_button = ttk.Button(self.button_frame, text="刷新数据", command=self.refresh_data)
+        self.refresh_button.pack(side=tk.LEFT, padx=2)
+        
+        # 创建搜索框
+        search_frame = ttk.Frame(right_frame)
+        search_frame.pack(fill=tk.X, pady=5)
+        
+        ttk.Label(search_frame, text="搜索:").pack(side=tk.LEFT, padx=2)
+        self.search_entry = ttk.Entry(search_frame, width=30)
+        self.search_entry.pack(side=tk.LEFT, padx=2, fill=tk.X, expand=True)
+        
+        self.search_button = ttk.Button(search_frame, text="查找", command=self.search_data)
+        self.search_button.pack(side=tk.LEFT, padx=2)
+        
+        self.clear_search_button = ttk.Button(search_frame, text="清除", command=self.clear_search)
+        self.clear_search_button.pack(side=tk.LEFT, padx=2)
+        
         # 查询框架
         query_frame = ttk.Frame(right_frame)
         query_frame.pack(fill=tk.X, pady=(0, 10))
@@ -80,6 +115,9 @@ class SQLiteVisualizer:
         menubar.add_cascade(label="数据", menu=data_menu)
         data_menu.add_command(label="执行SQL", command=self.execute_sql_dialog)
         data_menu.add_command(label="导出数据", command=self.export_data)
+        data_menu.add_command(label="添加记录", command=self.add_record_dialog)
+        data_menu.add_command(label="编辑记录", command=self.edit_record_dialog)
+        data_menu.add_command(label="删除记录", command=self.delete_record)
         
     def connect_db(self):
         try:
@@ -128,17 +166,88 @@ class SQLiteVisualizer:
                 self.tree.heading(col, text=col)
                 self.tree.column(col, width=100, anchor=tk.W)
             
-            # 获取表数据
-            cursor.execute(f"SELECT * FROM {table_name} LIMIT 1000;")  # 限制显示前1000行
+            # 获取表数据 - 移除LIMIT限制，显示所有数据
+            cursor.execute(f"SELECT * FROM {table_name};")
             rows = cursor.fetchall()
             
             # 插入数据
             for row in rows:
-                values = [row[col] for col in columns]
-                self.tree.insert('', tk.END, values=values)
+                # 确保将sqlite3.Row对象转换为元组，以便正确显示值
+                if isinstance(row, sqlite3.Row):
+                    # 对于Row对象，提取其所有值
+                    row_values = tuple(row)
+                else:
+                    row_values = row
+                self.tree.insert('', tk.END, values=row_values)
+                
+            # 更新标签，显示记录数量
+            self.table_label.config(text=f"表: {table_name} (共{len(rows)}条记录)")
+            self.current_table = table_name
                 
         except Exception as e:
             messagebox.showerror("错误", f"加载表数据失败: {str(e)}")
+    
+    def refresh_data(self):
+        # 刷新当前表的数据
+        if hasattr(self, 'current_table') and self.current_table:
+            self.load_table_data(self.current_table)
+        else:
+            messagebox.showinfo("信息", "请先选择一个表")
+    
+    def search_data(self):
+        # 搜索数据
+        if not hasattr(self, 'current_table') or not self.current_table:
+            messagebox.showinfo("信息", "请先选择一个表")
+            return
+        
+        search_text = self.search_entry.get().strip()
+        if not search_text:
+            messagebox.showinfo("信息", "请输入搜索内容")
+            return
+        
+        try:
+            # 获取当前表的所有列
+            columns = self.tree['columns']
+            if not columns:
+                messagebox.showinfo("信息", "没有可搜索的列")
+                return
+            
+            # 构建搜索条件（在所有列中搜索）
+            search_conditions = []
+            params = {}
+            
+            for i, col in enumerate(columns):
+                search_conditions.append(f"{col} LIKE :search{i}")
+                params[f"search{i}"] = f"%{search_text}%"
+            
+            where_clause = " OR ".join(search_conditions)
+            sql = f"SELECT * FROM {self.current_table} WHERE {where_clause}"
+            
+            cursor = self.connection.cursor()
+            cursor.execute(sql, params)
+            rows = cursor.fetchall()
+            
+            # 清空当前表格并显示搜索结果
+            self.tree.delete(*self.tree.get_children())
+            
+            # 确保将sqlite3.Row对象转换为元组，以便正确显示值
+            for row in rows:
+                if isinstance(row, sqlite3.Row):
+                    # 对于Row对象，提取其所有值
+                    row_values = tuple(row)
+                else:
+                    row_values = row
+                self.tree.insert('', tk.END, values=row_values)
+                
+            messagebox.showinfo("搜索结果", f"找到 {len(rows)} 条匹配记录")
+                
+        except Exception as e:
+            messagebox.showerror("错误", f"搜索失败: {str(e)}")
+    
+    def clear_search(self):
+        # 清除搜索内容并重新加载全部数据
+        self.search_entry.delete(0, tk.END)
+        self.refresh_data()
     
     def execute_query(self, event=None):
         query = self.query_entry.get().strip()
@@ -166,7 +275,12 @@ class SQLiteVisualizer:
                 # 插入数据
                 rows = cursor.fetchall()
                 for row in rows:
-                    self.tree.insert('', tk.END, values=row)
+                    # 确保将sqlite3.Row对象转换为元组，以便正确显示值
+                    if isinstance(row, sqlite3.Row):
+                        row_values = tuple(row)
+                    else:
+                        row_values = row
+                    self.tree.insert('', tk.END, values=row_values)
             else:
                 # 对于非SELECT语句，提交更改
                 self.connection.commit()
@@ -244,7 +358,12 @@ class SQLiteVisualizer:
                 # 插入数据
                 rows = cursor.fetchall()
                 for row in rows:
-                    result_tree.insert('', tk.END, values=row)
+                    # 确保将sqlite3.Row对象转换为元组，以便正确显示值
+                    if isinstance(row, sqlite3.Row):
+                        row_values = tuple(row)
+                    else:
+                        row_values = row
+                    result_tree.insert('', tk.END, values=row_values)
             else:
                 # 对于非SELECT语句，提交更改
                 self.connection.commit()
@@ -253,6 +372,365 @@ class SQLiteVisualizer:
             dialog.destroy()
         except Exception as e:
             messagebox.showerror("错误", f"查询执行失败: {str(e)}")
+    
+    def edit_record_dialog(self):
+        # 检查是否选择了表
+        selection = self.table_listbox.curselection()
+        if not selection:
+            messagebox.showwarning("警告", "请先选择一个表")
+            return
+        
+        table_name = self.table_listbox.get(selection[0])
+        
+        # 检查是否选择了要编辑的记录
+        selected_items = self.tree.selection()
+        if not selected_items:
+            messagebox.showwarning("警告", "请先选择一条要编辑的记录")
+            return
+        
+        # 只处理第一条选择的记录
+        item = selected_items[0]
+        
+        # 获取选中记录的数据
+        item_data = self.tree.item(item, "values")
+        columns = self.tree['columns']
+        
+        # 获取表结构
+        cursor = self.connection.cursor()
+        cursor.execute(f"PRAGMA table_info({table_name});")
+        columns_info = cursor.fetchall()
+        
+        # 创建对话框
+        dialog = tk.Toplevel(self.root)
+        dialog.title(f"编辑记录 - {table_name}")
+        dialog.geometry("600x400")
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # 创建滚动框架
+        main_frame = ttk.Frame(dialog)
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        canvas = tk.Canvas(main_frame)
+        scrollbar = ttk.Scrollbar(main_frame, orient=tk.VERTICAL, command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
+        
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(
+                scrollregion=canvas.bbox("all")
+            )
+        )
+        
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # 存储输入框的字典和主键信息
+        entry_fields = {}
+        primary_key = {}
+        
+        # 创建每个字段的标签和输入框
+        for col_info in columns_info:
+            col_name = col_info[1]
+            col_type = col_info[2]
+            not_null = col_info[3]
+            is_pk = col_info[5]
+            
+            # 查找字段在当前数据中的索引
+            if col_name in columns:
+                col_index = columns.index(col_name)
+                current_value = item_data[col_index] if col_index < len(item_data) else ""
+            else:
+                current_value = ""
+            
+            frame = ttk.Frame(scrollable_frame)
+            frame.pack(fill=tk.X, pady=5)
+            
+            # 标签显示字段名，标记非空字段
+            label_text = f"{col_name} ({col_type})"
+            if not_null:
+                label_text += " *"
+            if is_pk:
+                label_text += " [主键]"
+            
+            ttk.Label(frame, text=label_text, width=20).pack(side=tk.LEFT, padx=5)
+            
+            # 对于主键，显示但不允许编辑
+            if is_pk:
+                ttk.Label(frame, text=str(current_value), width=40, relief=tk.SUNKEN).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
+                primary_key[col_name] = current_value
+            else:
+                # 创建可编辑的输入框
+                entry = ttk.Entry(frame, width=40)
+                entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
+                if current_value is not None:
+                    entry.insert(0, str(current_value))
+                entry_fields[col_name] = (entry, not_null)
+        
+        # 按钮框架
+        button_frame = ttk.Frame(dialog)
+        button_frame.pack(fill=tk.X, pady=10, padx=10)
+        
+        # 确认按钮
+        ttk.Button(button_frame, text="保存", 
+                  command=lambda: self.update_record(table_name, entry_fields, primary_key, dialog)).pack(side=tk.LEFT)
+        
+        # 取消按钮
+        ttk.Button(button_frame, text="取消", command=dialog.destroy).pack(side=tk.RIGHT, padx=(5, 0))
+    
+    def update_record(self, table_name, entry_fields, primary_key, dialog):
+        # 验证非空字段
+        values = {}
+        for col_name, (entry, not_null) in entry_fields.items():
+            value = entry.get().strip()
+            if not_null and not value:
+                messagebox.showerror("错误", f"字段 '{col_name}' 不能为空")
+                return
+            values[col_name] = value if value else None
+        
+        try:
+            # 构建WHERE条件（使用主键）
+            where_clauses = [f"{col} = :{col}_pk" for col in primary_key.keys()]
+            where_sql = " AND ".join(where_clauses)
+            
+            # 构建更新SQL
+            set_clauses = [f"{col} = :{col}" for col in values.keys()]
+            set_sql = ", ".join(set_clauses)
+            
+            sql = f"UPDATE {table_name} SET {set_sql} WHERE {where_sql}"
+            
+            # 准备参数（包含主键值和更新值）
+            params = values.copy()
+            for col, val in primary_key.items():
+                params[f"{col}_pk"] = val
+            
+            # 执行更新
+            cursor = self.connection.cursor()
+            cursor.execute(sql, params)
+            self.connection.commit()
+            
+            if cursor.rowcount > 0:
+                messagebox.showinfo("成功", "记录更新成功")
+                # 刷新表格数据
+                if self.current_table == table_name:
+                    self.load_table_data(table_name)
+                dialog.destroy()
+            else:
+                messagebox.showwarning("警告", "未找到要更新的记录")
+                
+        except Exception as e:
+            messagebox.showerror("错误", f"更新记录失败: {str(e)}")
+    
+    def delete_record(self):
+        # 检查是否选择了表
+        selection = self.table_listbox.curselection()
+        if not selection:
+            messagebox.showwarning("警告", "请先选择一个表")
+            return
+        
+        table_name = self.table_listbox.get(selection[0])
+        
+        # 检查是否选择了要删除的记录
+        selected_items = self.tree.selection()
+        if not selected_items:
+            messagebox.showwarning("警告", "请先选择要删除的记录")
+            return
+        
+        # 获取表的主键信息
+        cursor = self.connection.cursor()
+        cursor.execute(f"PRAGMA table_info({table_name});")
+        columns_info = cursor.fetchall()
+        
+        # 找出主键列
+        pk_columns = [col_info[1] for col_info in columns_info if col_info[5]]
+        
+        # 如果没有明确的主键，使用所有列作为条件
+        if not pk_columns:
+            pk_columns = [col_info[1] for col_info in columns_info]
+        
+        # 获取选中记录的主键值
+        records_to_delete = []
+        columns = self.tree['columns']
+        
+        for item in selected_items:
+            item_data = self.tree.item(item, "values")
+            pk_values = {}
+            
+            for pk_col in pk_columns:
+                if pk_col in columns:
+                    col_index = columns.index(pk_col)
+                    if col_index < len(item_data):
+                        pk_values[pk_col] = item_data[col_index]
+                    else:
+                        pk_values[pk_col] = None
+                else:
+                    pk_values[pk_col] = None
+            
+            records_to_delete.append(pk_values)
+        
+        # 确认删除操作
+        if len(records_to_delete) == 1:
+            msg = f"确定要删除这条记录吗？"
+        else:
+            msg = f"确定要删除这 {len(records_to_delete)} 条记录吗？"
+        
+        if not messagebox.askyesno("确认删除", msg):
+            return
+        
+        # 执行删除操作
+        try:
+            cursor = self.connection.cursor()
+            
+            for pk_values in records_to_delete:
+                # 构建WHERE条件
+                where_clauses = []
+                params = {}
+                
+                for col, val in pk_values.items():
+                    if val is None:
+                        where_clauses.append(f"{col} IS NULL")
+                    else:
+                        where_clauses.append(f"{col} = :{col}")
+                        params[col] = val
+                
+                where_sql = " AND ".join(where_clauses)
+                sql = f"DELETE FROM {table_name} WHERE {where_sql}"
+                
+                cursor.execute(sql, params)
+            
+            self.connection.commit()
+            
+            messagebox.showinfo("成功", f"成功删除 {len(records_to_delete)} 条记录")
+            
+            # 刷新表格数据
+            if self.current_table == table_name:
+                self.load_table_data(table_name)
+                
+        except Exception as e:
+            messagebox.showerror("错误", f"删除记录失败: {str(e)}")
+            self.connection.rollback()
+    
+    def add_record_dialog(self):
+        selection = self.table_listbox.curselection()
+        if not selection:
+            messagebox.showwarning("警告", "请先选择一个表")
+            return
+        
+        table_name = self.table_listbox.get(selection[0])
+        
+        # 获取表结构
+        cursor = self.connection.cursor()
+        cursor.execute(f"PRAGMA table_info({table_name});")
+        columns_info = cursor.fetchall()
+        
+        # 创建对话框
+        dialog = tk.Toplevel(self.root)
+        dialog.title(f"添加记录 - {table_name}")
+        dialog.geometry("600x400")
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # 创建滚动框架
+        main_frame = ttk.Frame(dialog)
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        canvas = tk.Canvas(main_frame)
+        scrollbar = ttk.Scrollbar(main_frame, orient=tk.VERTICAL, command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
+        
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(
+                scrollregion=canvas.bbox("all")
+            )
+        )
+        
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # 存储输入框的字典
+        entry_fields = {}
+        
+        # 创建每个字段的标签和输入框
+        for idx, col_info in enumerate(columns_info):
+            col_name = col_info[1]
+            col_type = col_info[2]
+            not_null = col_info[3]
+            default_val = col_info[4]
+            is_pk = col_info[5]
+            
+            # 不允许用户编辑主键
+            if is_pk:
+                continue
+                
+            frame = ttk.Frame(scrollable_frame)
+            frame.pack(fill=tk.X, pady=5)
+            
+            # 标签显示字段名，标记非空字段
+            label_text = f"{col_name} ({col_type})"
+            if not_null:
+                label_text += " *"
+            
+            ttk.Label(frame, text=label_text, width=20).pack(side=tk.LEFT, padx=5)
+            
+            # 创建输入框
+            entry = ttk.Entry(frame, width=40)
+            entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
+            
+            # 如果有默认值，显示默认值提示
+            if default_val is not None:
+                entry.insert(0, str(default_val))
+            
+            entry_fields[col_name] = (entry, not_null)
+        
+        # 按钮框架
+        button_frame = ttk.Frame(dialog)
+        button_frame.pack(fill=tk.X, pady=10, padx=10)
+        
+        # 确认按钮
+        ttk.Button(button_frame, text="添加", 
+                  command=lambda: self.add_record(table_name, columns_info, entry_fields, dialog)).pack(side=tk.LEFT)
+        
+        # 取消按钮
+        ttk.Button(button_frame, text="取消", command=dialog.destroy).pack(side=tk.RIGHT, padx=(5, 0))
+    
+    def add_record(self, table_name, columns_info, entry_fields, dialog):
+        # 验证非空字段
+        values = {}
+        for col_name, (entry, not_null) in entry_fields.items():
+            value = entry.get().strip()
+            if not_null and not value:
+                messagebox.showerror("错误", f"字段 '{col_name}' 不能为空")
+                return
+            values[col_name] = value if value else None
+        
+        try:
+            # 构建插入SQL
+            fields = list(values.keys())
+            placeholders = [f":{field}" for field in fields]
+            
+            sql = f"INSERT INTO {table_name} ({', '.join(fields)}) VALUES ({', '.join(placeholders)})"
+            
+            # 执行插入
+            cursor = self.connection.cursor()
+            cursor.execute(sql, values)
+            self.connection.commit()
+            
+            messagebox.showinfo("成功", "记录添加成功")
+            
+            # 刷新表格数据
+            if self.current_table == table_name:
+                self.load_table_data(table_name)
+            
+            dialog.destroy()
+        except Exception as e:
+            messagebox.showerror("错误", f"添加记录失败: {str(e)}")
     
     def export_data(self):
         selection = self.table_listbox.curselection()

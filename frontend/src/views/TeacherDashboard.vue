@@ -1,22 +1,68 @@
 <template>
   <div class="teacher-dashboard">
-    <div class="dashboard-header">
-      <h1>教师中心</h1>
-      <div class="user-info">
-        <span class="welcome-message">欢迎您，{{ userInfo?.user_id || '教师用户' }}</span>
-      </div>
-    </div>
+    
 
-    <div class="dashboard-content">
-      <!-- 教师界面内容区域 -->
-      <div class="empty-state" v-if="!teacherData">
-        <div class="empty-icon">👨‍🏫</div>
-        <h3>教师信息待加载</h3>
-        <p>您的教师信息将在这里显示</p>
+    <div class="dashboard-container">
+      <!-- 侧边导航菜单 -->
+      <div class="sidebar">
+        <div class="user-info">
+          <span class="welcome-message">欢迎您，{{ userInfo?.user_id || '教师用户' }}</span>
+        </div>
+        <ul class="nav-menu">
+          <li 
+            class="nav-item" 
+            :class="{ active: currentRoute === '/teacher/dashboard/profile' }"
+            @click="navigateTo('/teacher/dashboard/profile')"
+          >
+            <i class="nav-icon">👤</i>
+            <span class="nav-text">个人信息</span>
+          </li>
+          <li 
+            class="nav-item" 
+            :class="{ active: currentRoute === '/teacher/dashboard/statistics' }"
+            @click="navigateTo('/teacher/dashboard/statistics')"
+          >
+            <i class="nav-icon">📊</i>
+            <span class="nav-text">学生统计</span>
+          </li>
+          <li 
+            class="nav-item" 
+            :class="{ active: currentRoute === '/teacher/dashboard/students' }"
+            @click="navigateTo('/teacher/dashboard/students')"
+          >
+            <i class="nav-icon">👥</i>
+            <span class="nav-text">学生列表</span>
+          </li>
+          <li 
+            class="nav-item" 
+            :class="{ active: currentRoute === '/teacher/dashboard/prediction' }"
+            @click="navigateTo('/teacher/dashboard/prediction')"
+          >
+            <i class="nav-icon">🔮</i>
+            <span class="nav-text">留学预测</span>
+          </li>
+          <li 
+            class="nav-item" 
+            :class="{ active: currentRoute === '/teacher/dashboard/training' }"
+            @click="navigateTo('/teacher/dashboard/training')"
+          >
+            <i class="nav-icon">📚</i>
+            <span class="nav-text">培训管理</span>
+          </li>
+          <li 
+            class="nav-item" 
+            :class="{ active: currentRoute === '/teacher/dashboard/schools' }"
+            @click="navigateTo('/teacher/dashboard/schools')"
+          >
+            <i class="nav-icon">🏫</i>
+            <span class="nav-text">学校管理</span>
+          </li>
+        </ul>
       </div>
-      
-      <div class="teacher-data" v-else>
-        <!-- 这里将展示教师数据，目前为空 -->
+
+      <!-- 主内容区域 -->
+      <div class="dashboard-content">
+        <router-view />
       </div>
     </div>
   </div>
@@ -31,14 +77,22 @@ export default {
       userInfo: {
         user_id: '',
         role: 'teacher'
-      }
+      },
+      currentRoute: '/teacher/profile'
     }
   },
   mounted() {
     // 页面加载时获取登录用户信息
     this.loadUserInfo()
-    // 后续可以添加加载教师数据的逻辑
+    // 设置当前路由
+    this.currentRoute = this.$route.path
     console.log('教师中心页面加载完成')
+  },
+  watch: {
+    // 监听路由变化
+    '$route.path': function(newPath) {
+      this.currentRoute = newPath
+    }
   },
   methods: {
     loadUserInfo() {
@@ -56,73 +110,107 @@ export default {
       } catch (e) {
         console.error('解析用户信息失败:', e)
       }
+    },
+    navigateTo(path) {
+      this.$router.push(path)
     }
   }
 }
 </script>
 
 <style scoped>
+/* 全局容器固定定位 */
 .teacher-dashboard {
-  min-height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background-color: #f5f7fa;
-}
-
-.dashboard-header {
-  background-color: #3f51b5;
-  color: white;
-  padding: 20px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.dashboard-header h1 {
+
+
+/* 主体容器 */
+.dashboard-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* 侧边导航菜单固定 */
+  .sidebar {
+    width: 240px;
+    background-color: #ffffff;
+    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.08);
+    padding: 20px;
+    overflow-y: auto;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 50;
+    margin-top: 20px;
+    margin-left: 15px;
+    border-radius: 8px;
+  }
+  
+  .sidebar .user-info {
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 20px;
+  }
+  
+  .sidebar .welcome-message {
+    font-size: 14px;
+    color: #333;
+    font-weight: 500;
+  }
+
+.nav-menu {
+  list-style: none;
+  padding: 0;
   margin: 0;
-  font-size: 24px;
 }
 
-.user-info {
+.nav-item {
   display: flex;
   align-items: center;
+  padding: 16px 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-left: 3px solid transparent;
 }
 
-.welcome-message {
-  font-size: 14px;
-  opacity: 0.9;
+.nav-item:hover {
+  background-color: #f5f5f5;
+  border-left-color: #3f51b5;
 }
 
-.dashboard-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
+.nav-item.active {
+  background-color: #e8eaf6;
+  border-left-color: #3f51b5;
+  color: #3f51b5;
+  font-weight: 500;
 }
 
-.empty-state {
-  text-align: center;
-  padding: 60px 20px;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.empty-icon {
-  font-size: 64px;
-  margin-bottom: 16px;
-}
-
-.empty-state h3 {
-  color: #333;
-  margin-bottom: 8px;
+.nav-icon {
   font-size: 18px;
+  margin-right: 12px;
 }
 
-.empty-state p {
-  color: #666;
+.nav-text {
   font-size: 14px;
 }
 
-.teacher-data {
-  /* 教师数据样式，目前为空 */
+/* 主内容区域 */
+.dashboard-content {
+  flex: 1;
+  padding: 24px;
+  padding-top: 94px; /* 添加70px上边距，原padding-top 24px + 70px = 94px */
+  overflow-y: auto;
+  background-color: #f5f7fa;
+  position: relative;
 }
 </style>

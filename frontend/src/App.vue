@@ -4,7 +4,10 @@
     <nav class="navbar" :class="{ 'navbar-scrolled': isScrolled }">
       <div class="container">
         <!-- 左侧品牌标识 -->
-        <router-link to="/" style="text-decoration: none; color: inherit;">
+        <router-link 
+          :to="isLoggedIn ? (userInfo.role === 'student' ? '/student/dashboard/profile' : '/teacher/dashboard/profile') : '/'" 
+          style="text-decoration: none; color: inherit;"
+        >
           <div class="brand">
             <div class="logo">🏫📚</div>
             <div class="brand-name">
@@ -19,9 +22,15 @@
           <div class="nav-item dropdown">
             <router-link to="/schools" style="text-decoration: none; color: inherit;">学校库</router-link>
           </div>
-          <div class="nav-item">服务介绍</div>
-          <div class="nav-item">成功案例</div>
-          <div class="nav-item">帮助中心</div>
+          <div class="nav-item">
+            <router-link to="/services" style="text-decoration: none; color: inherit;">服务介绍</router-link>
+          </div>
+          <div class="nav-item">
+            <router-link to="/success-stories" style="text-decoration: none; color: inherit;">成功案例</router-link>
+          </div>
+          <div class="nav-item">
+            <router-link to="/help-center" style="text-decoration: none; color: inherit;">帮助中心</router-link>
+          </div>
         </div>
 
         <!-- 移动端汉堡菜单 -->
@@ -39,9 +48,14 @@
           <!-- 已登录状态 -->
           <div class="logged-in" v-else>
             <div class="user-info dropdown">
-              <span :class="userInfo.role === 'student' ? 'student-role' : 'teacher-role'">
-                {{ userInfo.name || userInfo.username || '用户' }} | {{ userInfo.role === 'student' ? '学生' : '教师' }}
-              </span>
+              <router-link 
+                :to="userInfo.role === 'student' ? '/student/dashboard/profile' : '/teacher/dashboard/profile'"
+                style="text-decoration: none; color: inherit; display: block;"
+              >
+                <span :class="userInfo.role === 'student' ? 'student-role' : 'teacher-role'">
+                  {{ userInfo.name || userInfo.username || '用户' }} | {{ userInfo.role === 'student' ? '学生' : '教师' }}
+                </span>
+              </router-link>
               <div class="dropdown-content">
                 <a href="#" class="logout" @click="handleLogout">退出登录</a>
               </div>
@@ -55,9 +69,9 @@
     <div class="mobile-menu" :class="{ 'mobile-menu-open': showMobileMenu }">
       <div class="mobile-nav-links">
         <div class="mobile-nav-item"><router-link to="/schools" style="text-decoration: none; color: inherit;">学校库</router-link></div>
-        <div class="mobile-nav-item">服务介绍</div>
-        <div class="mobile-nav-item">成功案例</div>
-        <div class="mobile-nav-item">帮助中心</div>
+        <div class="mobile-nav-item"><router-link to="/services" style="text-decoration: none; color: inherit;">服务介绍</router-link></div>
+        <div class="mobile-nav-item"><router-link to="/success-stories" style="text-decoration: none; color: inherit;">成功案例</router-link></div>
+        <div class="mobile-nav-item"><router-link to="/help-center" style="text-decoration: none; color: inherit;">帮助中心</router-link></div>
         <div v-if="!isLoggedIn">
           <div class="mobile-nav-item" @click="openLoginModal">登录</div>
           <div class="mobile-nav-item" @click="openRegisterModal">注册</div>
@@ -201,19 +215,21 @@ export default {
       
       // 登录成功后根据用户角色跳转到对应页面
       if (userInfo.role === 'student') {
-        this.$router.push('/student/dashboard')
+        this.$router.push('/student/dashboard/profile')
       } else if (userInfo.role === 'teacher') {
         // 教师角色跳转到教师中心页面
-        this.$router.push('/teacher/dashboard')
+        this.$router.push('/teacher/dashboard/profile')
       }
       // 可以在这里添加登录成功后的提示
     },
     
     handleRegisterSuccess() {
-      // 注册成功后自动切换到登录页面
+      // 注册成功后自动切换到登录页面，用户登录后会自动跳转到个人信息页面
       this.showRegisterModal = false
       this.showLoginModal = true
       this.activeAuthForm = 'login'
+      // 提示用户登录以进入个人信息页面
+      alert('注册成功！请登录以进入个人信息页面')
     },
     
     handleLogout() {

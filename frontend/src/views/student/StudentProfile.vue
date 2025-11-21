@@ -1,140 +1,271 @@
 <template>
   <div class="student-profile">
+    <!-- 标题区域 -->
     <div class="page-header">
-      <h2>个人信息</h2>
-      <button class="edit-btn" @click="toggleEdit" v-if="!isEditing">
-        <i class="icon-edit"></i> 编辑信息
-      </button>
-    </div>
-    
-    <div v-if="loading" class="loading-container">
-      <div class="loading-spinner"></div>
-      <p>加载中...</p>
-    </div>
-    
-    <div v-else-if="error" class="error-message">
-      <p>{{ error }}</p>
-      <button @click="fetchProfile">重试</button>
-    </div>
-    
-    <div v-else class="profile-content">
-      <!-- 个人信息展示模式 -->
-      <div v-if="!isEditing" class="profile-display">
-        <div class="profile-section">
-          <h3>基本信息</h3>
-          <div class="info-grid">
-            <div class="info-item">
-              <label>真实姓名：</label>
-              <span>{{ profile.name || '未填写' }}</span>
-            </div>
-            <div class="info-item">
-              <label>性别：</label>
-              <span>{{ profile.gender || '未填写' }}</span>
-            </div>
-            <div class="info-item">
-              <label>年龄：</label>
-              <span>{{ profile.age || '未填写' }}</span>
-            </div>
-            <div class="info-item">
-              <label>电子邮箱：</label>
-              <span>{{ profile.email || '未填写' }}</span>
-            </div>
-            <div class="info-item">
-              <label>手机号码：</label>
-              <span>{{ profile.phone || '未填写' }}</span>
-            </div>
+      <div class="container">
+        <div class="header-content">
+          <div class="header-left">
+            <h1 class="page-title">
+              <i class="fas fa-user-circle"></i>
+              <span>个人信息</span>
+            </h1>
+            <p class="page-subtitle">查看和管理您的个人资料和学术信息</p>
+          </div>
+          <div class="header-actions">
+            <button class="btn-primary" @click="toggleEdit" v-if="!isEditing">
+              <i class="fas fa-edit"></i> 编辑信息
+            </button>
+            <button class="btn-secondary" @click="goBack">
+              <i class="fas fa-arrow-left"></i> 返回
+            </button>
           </div>
         </div>
-        
-        <div class="profile-section">
-          <h3>成绩信息</h3>
-          <div class="info-grid">
-            <div class="info-item">
-              <label>托福成绩：</label>
-              <span>{{ profile.toefl || '未填写' }}</span>
-            </div>
-            <div class="info-item">
-              <label>GRE成绩：</label>
-              <span>{{ profile.gre || '未填写' }}</span>
-            </div>
-            <div class="info-item">
-              <label>GPA成绩：</label>
-              <span>{{ profile.gpa || '未填写' }}</span>
-            </div>
-            <div class="info-item">
-              <label>目标留学地区：</label>
-              <span>{{ profile.target_region || '未填写' }}</span>
-            </div>
+      </div>
+    </div>
+    
+    <!-- 主要内容区域 -->
+    <div class="container">
+      <!-- 加载状态 -->
+      <div v-if="loading" class="loading-container">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">加载中...</p>
+      </div>
+      
+      <!-- 错误状态 -->
+      <div v-else-if="error" class="error-container">
+        <div class="error-content">
+          <i class="fas fa-exclamation-triangle"></i>
+          <div class="error-details">
+            <h3>获取信息失败</h3>
+            <p>{{ error }}</p>
+            <button class="btn-primary" @click="fetchProfile">重试</button>
           </div>
         </div>
       </div>
       
-      <!-- 个人信息编辑模式 -->
-      <div v-else class="profile-edit">
-        <form @submit.prevent="submitUpdate">
-          <div class="form-section">
-            <h3>基本信息</h3>
-            <div class="form-grid">
-              <div class="form-group">
-                <label for="name">真实姓名 *</label>
-                <input type="text" id="name" v-model="editProfile.name" placeholder="请输入真实姓名">
-              </div>
-              <div class="form-group">
-                <label for="gender">性别</label>
-                <select id="gender" v-model="editProfile.gender">
-                  <option value="">请选择</option>
-                  <option value="男">男</option>
-                  <option value="女">女</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="age">年龄</label>
-                <input type="number" id="age" v-model.number="editProfile.age" min="18" max="100" placeholder="18-100">
-              </div>
-              <div class="form-group">
-                <label for="email">电子邮箱</label>
-                <input type="email" id="email" v-model="editProfile.email" placeholder="请输入电子邮箱">
-              </div>
-              <div class="form-group">
-                <label for="phone">手机号码</label>
-                <input type="tel" id="phone" v-model="editProfile.phone" placeholder="请输入手机号码">
+      <!-- 个人信息内容 -->
+      <div v-else class="profile-content">
+        <!-- 个人信息展示模式 -->
+        <div v-if="!isEditing" class="profile-display">
+          <!-- 个人头像和基本信息头部区域 -->
+          <div class="profile-header">
+            <div class="avatar">
+              <i class="fas fa-user"></i>
+            </div>
+            <div class="profile-main-info">
+              <h2 class="profile-name">{{ profile.name || '未设置姓名' }}</h2>
+              <div class="profile-meta">
+                <span class="meta-item"><i class="fas fa-user-graduate"></i> 学生</span>
+                <span class="meta-item"><i class="fas fa-id-card"></i> 档案编号: {{ generateStudentId() }}</span>
+                <span class="meta-item"><i class="fas fa-calendar-alt"></i> 最后更新: {{ formatLastUpdated() }}</span>
               </div>
             </div>
           </div>
           
-          <div class="form-section">
-            <h3>成绩信息</h3>
-            <div class="form-grid">
-              <div class="form-group">
-                <label for="toefl">托福成绩</label>
-                <input type="number" id="toefl" v-model.number="editProfile.toefl" min="0" max="120" step="0.1" placeholder="0-120">
+          <!-- 信息卡片布局 - 两列布局 -->
+          <div class="info-section">
+            <!-- 基本信息卡片 -->
+            <div class="info-card">
+              <div class="card-header">
+                <i class="fas fa-user-shield"></i>
+                <h3>基本信息</h3>
               </div>
-              <div class="form-group">
-                <label for="gre">GRE成绩</label>
-                <input type="number" id="gre" v-model.number="editProfile.gre" min="260" max="340" step="0.1" placeholder="260-340">
+              <div class="card-body">
+                <div class="info-grid">
+                  <div class="info-item">
+                    <div class="info-label">真实姓名</div>
+                    <div class="info-value">{{ profile.name || '未填写' }}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="info-label">性别</div>
+                    <div class="info-value">{{ profile.gender || '未填写' }}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="info-label">年龄</div>
+                    <div class="info-value">{{ profile.age || '未填写' }}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="info-label">电子邮箱</div>
+                    <div class="info-value">{{ profile.email || '未填写' }}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="info-label">手机号码</div>
+                    <div class="info-value">{{ profile.phone || '未填写' }}</div>
+                  </div>
+                </div>
               </div>
-              <div class="form-group">
-                <label for="gpa">GPA成绩</label>
-                <input type="number" id="gpa" v-model.number="editProfile.gpa" min="0" max="4" step="0.1" placeholder="0.0-4.0">
+            </div>
+            
+            <!-- 学术成绩卡片 -->
+            <div class="info-card">
+              <div class="card-header">
+                <i class="fas fa-award"></i>
+                <h3>学术成绩</h3>
               </div>
-              <div class="form-group">
-                <label for="target_region">目标留学地区</label>
-                <input type="text" id="target_region" v-model="editProfile.target_region" placeholder="请输入目标留学地区">
+              <div class="card-body">
+                <div class="score-item">
+                  <div class="score-header">
+                    <i class="fas fa-language"></i>
+                    <h4>托福成绩</h4>
+                  </div>
+                  <div class="score-value">{{ profile.toefl || '--' }}</div>
+                  <div class="score-max">满分: 120</div>
+                  <div class="score-bar-container">
+                    <div class="score-bar" :style="{width: (profile.toefl ? (profile.toefl/120)*100 : 0) + '%'}"></div>
+                  </div>
+                </div>
+                
+                <div class="score-item">
+                  <div class="score-header">
+                    <i class="fas fa-chart-line"></i>
+                    <h4>GRE成绩</h4>
+                  </div>
+                  <div class="score-value">{{ profile.gre || '--' }}</div>
+                  <div class="score-max">满分: 340</div>
+                  <div class="score-bar-container">
+                    <div class="score-bar" :style="{width: (profile.gre ? ((profile.gre-260)/80)*100 : 0) + '%'}"></div>
+                  </div>
+                </div>
+                
+                <div class="score-item">
+                  <div class="score-header">
+                    <i class="fas fa-star"></i>
+                    <h4>GPA成绩</h4>
+                  </div>
+                  <div class="score-value">{{ profile.gpa || '--' }}</div>
+                  <div class="score-max">满分: 4.0</div>
+                  <div class="score-bar-container">
+                    <div class="score-bar" :style="{width: (profile.gpa ? (profile.gpa/4)*100 : 0) + '%'}"></div>
+                  </div>
+                </div>
+                
+                <div class="target-info">
+                  <div class="info-label">目标留学地区</div>
+                  <div class="info-value">{{ profile.target_region || '未填写' }}</div>
+                </div>
               </div>
             </div>
           </div>
-          
-          <div class="form-actions">
-            <button type="button" class="cancel-btn" @click="cancelEdit">取消</button>
-            <button type="submit" class="submit-btn" :disabled="submitting">{{ submitting ? '提交中...' : '保存修改' }}</button>
+        </div>
+        
+        <!-- 编辑模式 -->
+        <div v-else class="profile-edit">
+          <div class="edit-form-wrapper">
+            <form @submit.prevent="submitUpdate" class="edit-form">
+              <div class="form-header">
+                <h2>编辑个人信息</h2>
+                <p>请填写或更新您的个人和学术信息</p>
+              </div>
+              
+              <!-- 基本信息部分 -->
+              <div class="form-section">
+                <h3 class="section-title">
+                  <i class="fas fa-user-shield"></i>
+                  个人基本信息
+                </h3>
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label class="form-label" for="name">真实姓名 <span class="required">*</span></label>
+                    <input type="text" id="name" v-model="editProfile.name" placeholder="请输入真实姓名" class="form-input">
+                  </div>
+                  
+                  <div class="form-group">
+                    <label class="form-label" for="gender">性别</label>
+                    <select id="gender" v-model="editProfile.gender" class="form-input">
+                      <option value="">请选择</option>
+                      <option value="男">男</option>
+                      <option value="女">女</option>
+                    </select>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label class="form-label" for="age">年龄</label>
+                    <input type="number" id="age" v-model.number="editProfile.age" min="18" max="100" placeholder="18-100" class="form-input">
+                  </div>
+                  
+                  <div class="form-group">
+                    <label class="form-label" for="email">电子邮箱</label>
+                    <input type="email" id="email" v-model="editProfile.email" placeholder="请输入电子邮箱" class="form-input">
+                  </div>
+                  
+                  <div class="form-group">
+                    <label class="form-label" for="phone">手机号码</label>
+                    <input type="tel" id="phone" v-model="editProfile.phone" placeholder="请输入手机号码" class="form-input">
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 学术信息部分 -->
+              <div class="form-section">
+                <h3 class="section-title">
+                  <i class="fas fa-award"></i>
+                  学术成绩信息
+                </h3>
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label class="form-label" for="toefl">托福成绩</label>
+                    <input type="number" id="toefl" v-model.number="editProfile.toefl" min="0" max="120" step="0.1" placeholder="0-120" class="form-input">
+                    <div v-if="editProfile.toefl" class="score-preview">
+                      <div class="score-bar-container">
+                        <div class="score-bar" :style="{width: (editProfile.toefl/120)*100 + '%'}"></div>
+                      </div>
+                      <span class="score-text">{{ editProfile.toefl }}/120</span>
+                    </div>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label class="form-label" for="gre">GRE成绩</label>
+                    <input type="number" id="gre" v-model.number="editProfile.gre" min="260" max="340" step="0.1" placeholder="260-340" class="form-input">
+                    <div v-if="editProfile.gre" class="score-preview">
+                      <div class="score-bar-container">
+                        <div class="score-bar" :style="{width: ((editProfile.gre-260)/80)*100 + '%'}"></div>
+                      </div>
+                      <span class="score-text">{{ editProfile.gre }}/340</span>
+                    </div>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label class="form-label" for="gpa">GPA成绩</label>
+                    <input type="number" id="gpa" v-model.number="editProfile.gpa" min="0" max="4" step="0.1" placeholder="0.0-4.0" class="form-input">
+                    <div v-if="editProfile.gpa" class="score-preview">
+                      <div class="score-bar-container">
+                        <div class="score-bar" :style="{width: (editProfile.gpa/4)*100 + '%'}"></div>
+                      </div>
+                      <span class="score-text">{{ editProfile.gpa }}/4.0</span>
+                    </div>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label class="form-label" for="target_region">目标留学地区</label>
+                    <input type="text" id="target_region" v-model="editProfile.target_region" placeholder="请输入目标留学地区" class="form-input">
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 表单操作按钮 -->
+              <div class="form-actions">
+                <button type="button" class="btn-secondary" @click="cancelEdit">
+                  <i class="fas fa-times"></i> 取消
+                </button>
+                <button type="submit" class="btn-primary" :disabled="submitting">
+                  <i class="fas fa-save"></i> {{ submitting ? '提交中...' : '保存更改' }}
+                </button>
+              </div>
+            </form>
           </div>
-        </form>
+        </div>
       </div>
     </div>
     
     <!-- 成功提示 -->
-    <div v-if="successMessage" class="success-message">
-      {{ successMessage }}
+    <div v-if="successMessage" class="success-notification">
+      <div class="success-content">
+        <i class="fas fa-check-circle"></i>
+        <div class="success-text">
+          <h3>更新成功</h3>
+          <p>{{ successMessage }}</p>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -159,6 +290,28 @@ export default {
   },
   
   methods: {
+    // 返回上一页
+    goBack() {
+      this.$router.back()
+    },
+    
+    // 生成学生ID示例
+    generateStudentId() {
+      return 'S' + Math.floor(10000 + Math.random() * 90000)
+    },
+    
+    // 格式化最后更新时间
+    formatLastUpdated() {
+      const now = new Date()
+      return now.toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    },
+    
     // 获取个人信息
     async fetchProfile() {
       this.loading = true
@@ -327,252 +480,530 @@ export default {
 </script>
 
 <style scoped>
-.student-profile {
-  padding: 20px;
-  max-width: 1000px;
-  margin: 0 auto;
+/* 引入Font Awesome */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css');
+
+/* 基础样式重置 */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
+/* 简洁风格的基础样式 */
+.student-profile {
+  min-height: 100vh;
+  background-color: #f5f7fa;
+  font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  color: #333;
+  line-height: 1.6;
+}
+
+/* 容器样式 */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* 页面头部样式 */
 .page-header {
+  background-color: #fff;
+  border-bottom: 1px solid #e1e8ed;
+  padding: 20px 0;
+  margin-bottom: 30px;
+}
+
+.header-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid #e0e0e0;
+  flex-wrap: wrap;
+  gap: 20px;
 }
 
-.page-header h2 {
-  margin: 0;
+.header-left {
+  flex: 1;
+}
+
+.page-title {
+  font-size: 28px;
+  font-weight: 600;
   color: #333;
-  font-size: 24px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.edit-btn {
-  background-color: #4CAF50;
+.page-subtitle {
+  font-size: 16px;
+  color: #666;
+}
+
+/* 按钮样式 */
+.btn-primary {
+  background-color: #3498db;
   color: white;
   border: none;
   padding: 10px 20px;
-  border-radius: 5px;
-  cursor: pointer;
+  border-radius: 6px;
   font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 5px;
-  transition: background-color 0.3s;
+  gap: 8px;
+  transition: background-color 0.3s ease;
 }
 
-.edit-btn:hover {
-  background-color: #45a049;
+.btn-primary:hover {
+  background-color: #2980b9;
 }
 
+.btn-secondary {
+  background-color: #f8f9fa;
+  color: #333;
+  border: 1px solid #ddd;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  margin-left: 10px;
+}
+
+.btn-secondary:hover {
+  background-color: #e9ecef;
+  border-color: #ccc;
+}
+
+/* 加载状态样式 */
 .loading-container {
-  text-align: center;
-  padding: 50px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 0;
   color: #666;
 }
 
 .loading-spinner {
-  border: 4px solid rgba(0, 0, 0, 0.1);
-  border-left-color: #4CAF50;
-  border-radius: 50%;
   width: 40px;
   height: 40px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #3498db;
+  border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin: 0 auto 15px;
+  margin-bottom: 15px;
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-.error-message {
-  background-color: #ffebee;
-  color: #c62828;
-  padding: 15px;
-  border-radius: 5px;
-  margin-bottom: 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.error-message button {
-  background-color: #c62828;
-  color: white;
-  border: none;
-  padding: 5px 15px;
-  border-radius: 3px;
-  cursor: pointer;
-}
-
-.success-message {
-  background-color: #e8f5e9;
-  color: #2e7d32;
-  padding: 15px;
-  border-radius: 5px;
-  margin-bottom: 20px;
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 1000;
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.profile-section {
-  background-color: #f9f9f9;
+/* 错误状态样式 */
+.error-container {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
   border-radius: 8px;
   padding: 20px;
-  margin-bottom: 30px;
+  margin: 20px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
 }
 
-.profile-section h3 {
-  margin-top: 0;
-  margin-bottom: 20px;
-  color: #444;
+.error-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  width: 100%;
+}
+
+.error-content i {
+  font-size: 24px;
+  margin-top: 2px;
+}
+
+.error-details h3 {
+  margin-bottom: 8px;
   font-size: 18px;
-  border-bottom: 1px solid #ddd;
-  padding-bottom: 10px;
 }
 
+.error-details p {
+  margin-bottom: 12px;
+}
+
+.error-details .btn-primary {
+  margin: 0;
+}
+
+/* 个人信息展示样式 */
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+}
+
+.avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #e3f2fd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  color: #3498db;
+}
+
+.profile-main-info {
+  flex: 1;
+}
+
+.profile-name {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.profile-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  font-size: 14px;
+  color: #666;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 信息卡片布局 - 左右布局 */
+.info-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.info-card {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  overflow: hidden;
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e1e8ed;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.card-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.card-header i {
+  color: #3498db;
+  font-size: 20px;
+}
+
+.card-body {
+  padding: 15px;
+}
+
+/* 信息网格布局 */
 .info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 15px;
 }
 
 .info-item {
   display: flex;
-  align-items: center;
-  padding: 8px 0;
+  flex-direction: column;
+  gap: 5px;
 }
 
-.info-item label {
-  font-weight: 600;
+.info-label {
+  font-size: 14px;
   color: #666;
-  width: 120px;
-  flex-shrink: 0;
+  font-weight: 500;
 }
 
-.info-item span {
+.info-value {
+  font-size: 16px;
   color: #333;
-  word-break: break-word;
 }
 
-.profile-edit {
+/* 成绩样式 */
+.score-item {
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e1e8ed;
+}
+
+.score-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.score-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.score-header i {
+  color: #3498db;
+  font-size: 18px;
+}
+
+.score-header h4 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.score-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #3498db;
+  margin-bottom: 3px;
+}
+
+.score-max {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 10px;
+}
+
+.score-bar-container {
+  width: 100%;
+  height: 8px;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.score-bar {
+  height: 100%;
+  background-color: #3498db;
+  transition: width 0.3s ease;
+}
+
+/* 编辑模式样式 */
+.edit-form-wrapper {
   background-color: #fff;
   border-radius: 8px;
-  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  padding: 30px;
+}
+
+.form-header {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e1e8ed;
+}
+
+.form-header h2 {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.form-header p {
+  color: #666;
+  font-size: 16px;
 }
 
 .form-section {
   margin-bottom: 30px;
 }
 
-.form-section h3 {
-  margin-top: 0;
-  margin-bottom: 20px;
-  color: #444;
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-size: 18px;
-  border-bottom: 1px solid #ddd;
-  padding-bottom: 10px;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.section-title i {
+  color: #3498db;
 }
 
 .form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 20px;
-  margin-bottom: 20px;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
+  gap: 8px;
 }
 
-.form-group label {
-  margin-bottom: 8px;
-  font-weight: 600;
-  color: #666;
+.form-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
 }
 
-.form-group input,
-.form-group select {
-  padding: 10px;
+.required {
+  color: #e74c3c;
+}
+
+.form-input {
+  padding: 10px 12px;
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 14px;
+  transition: border-color 0.3s ease;
 }
 
-.form-group input:focus,
-.form-group select:focus {
+.form-input:focus {
   outline: none;
-  border-color: #4CAF50;
-  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+  border-color: #3498db;
+}
+
+.score-preview {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.score-preview .score-bar-container {
+  flex: 1;
+  height: 6px;
+}
+
+.score-text {
+  font-size: 12px;
+  color: #666;
 }
 
 .form-actions {
   display: flex;
-  gap: 15px;
   justify-content: flex-end;
+  gap: 15px;
   margin-top: 30px;
   padding-top: 20px;
-  border-top: 1px solid #ddd;
+  border-top: 1px solid #e1e8ed;
 }
 
-.cancel-btn {
-  background-color: #f5f5f5;
-  color: #666;
-  border: 1px solid #ddd;
-  padding: 10px 20px;
-  border-radius: 5px;
-  cursor: pointer;
+/* 成功提示样式 */
+.success-notification {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+  border-radius: 6px;
+  padding: 15px 20px;
+  max-width: 400px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  animation: slideInRight 0.3s ease;
+  z-index: 1000;
+}
+
+.success-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.success-content i {
+  font-size: 24px;
+  color: #28a745;
+  margin-top: 2px;
+}
+
+.success-text h3 {
+  margin-bottom: 5px;
+  font-size: 16px;
+}
+
+.success-text p {
   font-size: 14px;
-  transition: all 0.3s;
+  margin: 0;
 }
 
-.cancel-btn:hover {
-  background-color: #e0e0e0;
-}
-
-.submit-btn {
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.3s;
-}
-
-.submit-btn:hover:not(:disabled) {
-  background-color: #45a049;
-}
-
-.submit-btn:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .student-profile {
+  .container {
     padding: 15px;
   }
   
-  .page-header {
+  .header-content {
     flex-direction: column;
     align-items: flex-start;
     gap: 15px;
   }
   
-  .info-grid,
+  .header-actions {
+    width: 100%;
+    display: flex;
+  }
+  
+  .header-actions button {
+    flex: 1;
+    margin: 0;
+  }
+  
+  .btn-secondary {
+    margin-left: 10px;
+  }
+  
+  .profile-header {
+    flex-direction: column;
+    text-align: center;
+    padding: 20px;
+  }
+  
+  .info-section {
+    grid-template-columns: 1fr;
+  }
+  
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+  
   .form-grid {
     grid-template-columns: 1fr;
   }
@@ -583,6 +1014,11 @@ export default {
   
   .form-actions button {
     width: 100%;
+  }
+  
+  .btn-secondary {
+    margin-left: 0;
+    margin-top: 10px;
   }
 }
 </style>

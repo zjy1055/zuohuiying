@@ -6,27 +6,6 @@
     </header>
 
     <div class="filter-section">
-      <div class="filter-group">
-        <label for="region">地区筛选：</label>
-        <select id="region" v-model="selectedRegion" @change="filterSchools">
-          <option value="">全部地区</option>
-          <option value="美国">美国</option>
-          <option value="英国">英国</option>
-          <option value="澳洲">澳洲</option>
-          <option value="加拿大">加拿大</option>
-        </select>
-      </div>
-
-      <div class="filter-group">
-        <label for="ranking">排名筛选：</label>
-        <select id="ranking" v-model="selectedRanking" @change="filterSchools">
-          <option value="">全部排名</option>
-          <option value="50">Top 50</option>
-          <option value="100">Top 100</option>
-          <option value="200">Top 200</option>
-        </select>
-      </div>
-
       <div class="search-group">
         <input 
           type="text" 
@@ -86,8 +65,7 @@ export default {
     return {
       schools: [],
       filteredSchools: [],
-      selectedRegion: '',
-      selectedRanking: '',
+
       searchKeyword: '',
       loading: false,
       currentPage: 1,
@@ -127,17 +105,6 @@ export default {
     },
     filterSchools() {
       let filtered = [...this.schools];
-
-      // 地区筛选
-      if (this.selectedRegion) {
-        filtered = filtered.filter(school => school.location === this.selectedRegion);
-      }
-
-      // 排名筛选
-      if (this.selectedRanking) {
-        const maxRank = parseInt(this.selectedRanking);
-        filtered = filtered.filter(school => school.ranking && school.ranking <= maxRank);
-      }
 
       // 关键词搜索
       if (this.searchKeyword) {
@@ -250,7 +217,7 @@ export default {
 
 .schools-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 25px;
   margin-bottom: 30px;
 }

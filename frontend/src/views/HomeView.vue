@@ -119,22 +119,25 @@ export default {
 <style scoped>
 /* 全局样式重置 */
 .home {
-  min-height: 100vh;
+  height: calc(100vh - 80px); /* 视口高度减去导航栏高度 */
   font-family: 'Arial', sans-serif;
   color: #333;
-  padding-top: 80px; /* 为固定导航栏留出空间 */
+  padding-top: 0; /* 移除顶部padding */
+  overflow: hidden; /* 防止页面滚动 */
+  display: flex;
+  flex-direction: column;
 }
 
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 0px;
 }
 
 .section-title {
   text-align: center;
   font-size: 2.5rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   color: #3498db;
 }
 
@@ -447,8 +450,9 @@ export default {
 
 /* 服务卡片区域 */
 .services-section {
-  padding: 100px 0 80px;
+  padding: 5px 0 5px;
   background-color: #f8f9fa;
+  flex: 0 0 auto;
 }
 
 .services-grid {
@@ -484,33 +488,36 @@ export default {
 
 .service-description {
   color: #7f8c8d;
-  line-height: 1.6;
-  margin-bottom: 20px;
-  min-height: 100px;
+  line-height: 1.4;
+  margin-bottom: 15px;
+  min-height: 80px;
+  font-size: 0.95rem;
 }
 
 .service-btn {
     background-color: #3498db;
     color: white;
     border: none;
-    padding: 10px 25px;
+    padding: 8px 20px;
     border-radius: 4px;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     cursor: pointer;
     transition: all 0.3s ease;
   }
 
   .service-btn:hover {
     background-color: #2980b9;
-    transform: translateY(-2px);
+    transform: translateY(-1px);
   }
   
   
 
 /* 数据看板 */
 .stats-section {
-  padding: 60px 0;
+  padding: 0;
   background-color: white;
+  flex: 0 0 auto;
+  margin: 5px 0;
 }
 
 .stats-grid {
@@ -521,9 +528,9 @@ export default {
 
 .stat-item {
   text-align: center;
-  padding: 30px;
+  padding: 20px;
   background-color: #f8f9fa;
-  border-radius: 10px;
+  border-radius: 8px;
   transition: transform 0.3s ease;
 }
 
@@ -535,7 +542,7 @@ export default {
   font-size: 2.5rem;
   font-weight: bold;
   color: #3498db;
-  margin-bottom: 10px;
+  margin-bottom: 2px;
 }
 
 .stat-label {
@@ -545,15 +552,16 @@ export default {
 
 /* 用户评价 */
 .testimonials-section {
-  padding: 80px 0;
+  padding: 5px 0;
   background-color: #f8f9fa;
+  flex: 0 0 auto;
 }
 
 .testimonial-carousel {
   position: relative;
-  max-width: 800px;
+  max-width: 1200px;
   margin: 0 auto;
-  height: 200px;
+  height: 100px;
   overflow: hidden;
 }
 
@@ -577,10 +585,10 @@ export default {
 }
 
 .testimonial-content {
-  font-size: 1.1rem;
-  line-height: 1.8;
+  font-size: 1rem;
+  line-height: 1.5;
   color: #34495e;
-  margin-bottom: 20px;
+  margin-bottom: 5px;
   font-style: italic;
 }
 

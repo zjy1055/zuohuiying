@@ -255,9 +255,9 @@ export default {
         // 显示成功信息
         alert(`注册成功！用户ID: ${data.user_id}，请登录`);
         
-        // 如果不是作为组件使用（直接访问），则跳转登录页
+        // 如果不是作为组件使用（直接访问），则跳转首页
         if (this.$route.path === '/register') {
-          this.$router.push('/login');
+          this.$router.push('/');
         }
       } catch (error) {
         alert(error.message);

@@ -1,8 +1,19 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import SchoolsView from '../views/SchoolsView.vue'
+import ServiceIntroduction from '../views/ServiceIntroduction.vue'
+import SuccessStories from '../views/SuccessStories.vue'
+import HelpCenter from '../views/HelpCenter.vue'
 import StudentDashboard from '../views/StudentDashboard.vue'
 import TeacherDashboard from '../views/TeacherDashboard.vue'
+
+// 导入教师功能组件
+import TeacherProfile from '../views/teacher/TeacherProfile.vue'
+import TeacherStatistics from '../views/Teacher/TeacherStatistics.vue'
+import TrainingManagement from '../views/Teacher/TrainingManagement.vue'
+import StudentList from '../views/Teacher/StudentList.vue'
+import Prediction from '../views/Teacher/Prediction.vue'
+import SchoolsManagement from '../views/teacher/SchoolsManagement.vue'
 
 // 导入学生功能组件
 import StudentProfile from '../views/student/StudentProfile.vue'
@@ -24,6 +35,24 @@ const routes = [
     name: 'Schools',
     component: SchoolsView,
     meta: { title: '学校库' }
+  },
+  {
+    path: '/services',
+    name: 'ServiceIntroduction',
+    component: ServiceIntroduction,
+    meta: { title: '服务介绍' }
+  },
+  {
+    path: '/success-stories',
+    name: 'SuccessStories',
+    component: SuccessStories,
+    meta: { title: '成功案例' }
+  },
+  {
+    path: '/help-center',
+    name: 'HelpCenter',
+    component: HelpCenter,
+    meta: { title: '帮助中心' }
   },
   // 保留登录和注册路由作为备用，在用户直接访问时重定向到首页
   {
@@ -91,14 +120,70 @@ const routes = [
 
       ]
     },
-  {
+  {  
     path: '/teacher/dashboard',
     name: 'TeacherDashboard',
     component: TeacherDashboard,
     meta: {
       title: '教师中心',
       requiresAuth: true // 标记为需要认证的页面
-    }
+    },
+    children: [
+      {
+        path: 'profile',
+        name: 'teacherProfile',
+        component: TeacherProfile,
+        meta: {
+          title: '教师资料',
+          requiresAuth: true
+        }
+      },
+      {
+        path: 'statistics',
+        name: 'teacherStatistics',
+        component: TeacherStatistics,
+        meta: {
+          title: '学生统计',
+          requiresAuth: true
+        }
+      },
+        {
+          path: 'training',
+          name: 'trainingManagement',
+          component: TrainingManagement,
+          meta: {
+            title: '培训管理',
+            requiresAuth: true
+          }
+        },
+        {
+          path: 'students',
+          name: 'studentList',
+          component: StudentList,
+          meta: {
+            title: '学生列表',
+            requiresAuth: true
+          }
+        },
+        {
+          path: 'prediction',
+          name: 'prediction',
+          component: Prediction,
+          meta: {
+            title: '留学预测',
+            requiresAuth: true
+          }
+        },
+        {
+          path: 'schools',
+          name: 'schoolsManagement',
+          component: SchoolsManagement,
+          meta: {
+            title: '学校管理',
+            requiresAuth: true
+          }
+        }
+    ]
   }
 ]
 

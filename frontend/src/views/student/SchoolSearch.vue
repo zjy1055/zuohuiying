@@ -13,15 +13,7 @@
             placeholder="输入学校名称关键词"
           />
         </div>
-        <div class="form-group">
-          <label for="major">专业名称</label>
-          <input 
-            id="major" 
-            v-model="searchParams.major" 
-            type="text" 
-            placeholder="输入专业名称关键词"
-          />
-        </div>
+        
         <div class="form-group">
           <label for="region">地区</label>
           <input 

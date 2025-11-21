@@ -30,16 +30,7 @@
     
     <!-- 主内容区域 -->
     <div class="dashboard-content">
-      <!-- 面包屑导航 -->
-      <div class="breadcrumb" v-if="currentBreadcrumb.length > 0">
-        <span v-for="(item, index) in currentBreadcrumb" :key="index" class="breadcrumb-item">
-          <router-link :to="item.path" v-if="index < currentBreadcrumb.length - 1">
-            {{ item.name }}
-          </router-link>
-          <span v-else>{{ item.name }}</span>
-          <span v-if="index < currentBreadcrumb.length - 1" class="breadcrumb-separator">/</span>
-        </span>
-      </div>
+
       
       <!-- 全局加载提示 -->
       <div v-if="loading" class="global-loading">
@@ -123,8 +114,7 @@ export default {
         show: false,
         item: null
       },
-      // 面包屑导航
-      currentBreadcrumb: []
+
     }
   },
   watch: {
@@ -134,8 +124,7 @@ export default {
         this.currentPath = this.getBasePath(newRoute.path)
         // 页面切换时清除提示消息
         this.clearMessages()
-        // 更新面包屑导航
-        this.updateBreadcrumb()
+
       },
       immediate: true
     }
@@ -249,28 +238,7 @@ export default {
       this.tooltip.show = false
       this.tooltip.item = null
     },
-    // 更新面包屑导航
-    updateBreadcrumb() {
-        const pathParts = this.$route.path.split('/').filter(Boolean)
-        const breadcrumb = [
-          { name: '学生中心', path: '/student/dashboard' }
-        ]
-        
-        if (pathParts.length >= 3 && pathParts[0] === 'student' && pathParts[1] === 'dashboard') {
-          const currentNavItem = this.navItems.find(item => {
-            return item.path.includes(`/student/dashboard/${pathParts[2]}`)
-          })
-          
-          if (currentNavItem) {
-            breadcrumb.push({ 
-              name: currentNavItem.name, 
-              path: currentNavItem.path 
-            })
-          }
-        }
-        
-        this.currentBreadcrumb = breadcrumb
-    }
+
   }
 }
 </script>
@@ -404,37 +372,7 @@ export default {
   border-bottom-color: rgba(0, 0, 0, 0.8);
 }
 
-/* 面包屑导航样式 */
-.breadcrumb {
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #eaeaea;
-  display: flex;
-  align-items: center;
-  font-size: 14px;
-  color: #666;
-}
 
-.breadcrumb-item {
-  display: flex;
-  align-items: center;
-}
-
-.breadcrumb-item a {
-  color: #3498db;
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
-
-.breadcrumb-item a:hover {
-  color: #2980b9;
-  text-decoration: underline;
-}
-
-.breadcrumb-separator {
-  margin: 0 8px;
-  color: #ccc;
-}
 
 /* 路由过渡效果 */
 .fade-enter-active, .fade-leave-active {

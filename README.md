@@ -303,15 +303,35 @@ users 1:N document_reservations (teacher)
 
 - Python 3.7+
 - pip包管理器
-- SQLite数据库
+- SQLite数据库（Python标准库内置，无需单独安装）
+
+#### 9.1.1.1 Python环境安装
+
+如果未安装Python，可以通过以下方式安装：
+
+**Windows系统：**
+
+使用winget安装（推荐）：
+```powershell
+winget install Python.Python.3.11 --accept-source-agreements
+```
+
+或者从[Python官网](https://www.python.org/downloads/windows/)下载安装程序。
+
+**注意：** 安装时请勾选"Add Python to PATH"选项，或安装后重启系统以确保Python命令在任何目录下都可用。
+
+**验证安装：**
+```powershell
+python --version
+pip --version
+```
 
 #### 9.1.2 安装与启动步骤
 
 1. 进入后端目录：`cd backend`
 2. 安装依赖：`pip install -r requirements.txt`
 3. 配置环境变量（可选）：根据需要修改 `.env` 文件中的配置
-4. 添加测试数据（可选）：运行 `python add_test_data_complete.py` 生成测试数据
-5. 运行服务：`uvicorn main:app --reload`
+4. 运行服务：`uvicorn main:app --reload`
 
 **启动成功后：**
 - API服务将在 http://127.0.0.1:8000 启动
@@ -322,19 +342,62 @@ users 1:N document_reservations (teacher)
 
 #### 9.2.1 环境要求
 
-- Node.js 16+
+- Node.js LTS版本（推荐16+）
 - npm包管理器
+
+> **说明：** 前端运行只需要Node.js环境，不需要Python环境。即使没有Python环境，也可以正常安装和启动前端开发服务器。但要使用完整功能，包括API调用，仍需启动后端服务，这就需要Python环境。
 
 #### 9.2.2 安装与启动步骤
 
-1. 进入前端目录：`cd frontend`
-2. 安装依赖：`npm install`
-3. 运行开发服务：`npm run dev`
+**前置条件**
+确保已安装Node.js LTS版本。如果未安装，可以通过以下方式安装：
+
+```bash
+winget install OpenJS.NodeJS.LTS --accept-source-agreements
+```
+
+**安装依赖**
+
+**重启系统后的简化方法（推荐）：**
+
+如果系统已重启，直接在frontend目录下执行：
+
+```powershell
+cd d:\zuohuiying-main\frontend
+npm install
+```
+
+**如果未重启系统，使用完整路径执行：**
+
+```powershell
+cd 'C:\Program Files\nodejs' ; .\node node_modules\npm\bin\npm-cli.js install --prefix 'd:\zuohuiying-main\frontend'
+```
+
+**注意：** 安装完Node.js后，重启系统可以解决路径问题，使node和npm命令在任何目录下直接可用。这是因为系统重启后，所有新的PowerShell会话都会加载更新后的环境变量。
+
+**启动前端开发服务器**
+
+**重启系统后的简化方法（推荐）：**
+
+```powershell
+cd d:\zuohuiying-main\frontend
+npm run dev
+```
+
+**如果未重启系统，使用完整路径执行：**
+
+```powershell
+cd 'd:\zuohuiying-main\frontend' ; & 'C:\Program Files\nodejs\node' node_modules\vite\bin\vite.js
+```
 
 **启动成功后：**
 - 前端开发服务将在 http://localhost:5173 启动
 - 支持热重载，修改代码后自动更新
 - 开发环境已配置跨域支持，可以直接调用后端API
+
+**后端服务配置**
+
+前端项目已配置API代理，将所有 `/api` 请求代理到 http://127.0.0.1:8000 后端服务。请确保后端服务已启动。
 
 ### 9.3 生产环境部署
 
@@ -357,7 +420,8 @@ pip install gunicorn
 
 # 2. 使用Gunicorn启动服务
 cd backend
-gunicorn -w 4 -k uvicorn.workers.UvicornWorker main:app -b 0.0.0.0:8000
+# 确保在backend目录下且虚拟环境已激活
+uvicorn main:app --reload
 ```
 
 **Nginx配置示例** (`/etc/nginx/sites-available/study-abroad`):
@@ -391,37 +455,9 @@ server {
 4. 设置适当的日志记录
 5. 考虑使用进程管理器（如systemd）管理服务
 
-## 9.4 自动安装与运行脚本
 
-为了简化环境配置和项目启动流程，项目提供了`setup_and_run.bat`自动化脚本，可在Windows系统上一键完成环境检测、安装和服务启动。
 
-### 9.4.1 脚本功能
 
-- **自动环境检测**：检测系统是否已安装Python 3.11.4和Node.js 18.16.0
-- **自动环境安装**：若环境未安装，自动下载并静默安装所需环境
-- **依赖自动安装**：自动安装前后端项目所需的所有依赖包
-- **服务自动启动**：自动启动前后端服务并打开浏览器访问前端页面
-- **环境变量配置**：自动配置Python和Node.js的环境变量
-
-### 9.4.2 使用方法
-
-1. 确保项目文件已完整下载到本地
-2. 在Windows系统中，直接双击运行`setup_and_run.bat`文件
-3. 脚本将自动执行以下操作：
-   - 检测Python和Node.js环境
-   - 若未安装，自动下载并安装所需环境
-   - 安装项目依赖（使用国内镜像源加速）
-   - 生成前后端启动脚本
-   - 自动启动后端服务（端口8000）
-   - 自动启动前端服务（端口5173）
-   - 自动打开浏览器访问http://localhost:5173
-
-### 9.4.3 注意事项
-
-- 脚本需要管理员权限以进行环境安装和配置
-- 首次运行可能需要较长时间，取决于网络速度和系统性能
-- 若已手动安装环境，脚本会自动跳过安装步骤
-- 脚本仅适用于Windows操作系统
 
 ## 10. 数据库可视化工具
 
